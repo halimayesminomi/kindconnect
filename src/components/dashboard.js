@@ -27,7 +27,8 @@ export function DashboardShell({ children, user }) {
 
   const displayName = user?.name || "User";
   const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
-  const role = user?.role === "admin" ? "Admin" : user?.role === "organizer" ? "Organizer" : "Volunteer";
+  const isOrganizer = user?.role === "organizer" || user?.role === "admin";
+  const role = isOrganizer ? (user?.designation || "Lead Organizer & Platform Builder") : "Volunteer";
 
   const fetchNotifs = () => {
     api.getNotifications()
@@ -171,7 +172,17 @@ export function DashboardShell({ children, user }) {
             ) : (
               <span className="avatar" title={displayName}>{initials}</span>
             )}
-            <span><b>{displayName}</b><small>{role}</small></span>
+            <span>
+              <b style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {displayName}
+                {isOrganizer && (
+                  <span style={{ background: "var(--green)", color: "#062817", fontSize: "0.58rem", fontWeight: 800, padding: "1px 6px", borderRadius: 6, letterSpacing: "0.5px" }}>
+                    BUILDER
+                  </span>
+                )}
+              </b>
+              <small style={{ color: isOrganizer ? "var(--green)" : "inherit", fontWeight: isOrganizer ? 700 : 400 }}>{role}</small>
+            </span>
             <ChevronDown size={15}/>
           </div>
         </div>

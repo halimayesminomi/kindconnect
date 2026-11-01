@@ -80,7 +80,12 @@ export function Navbar() {
                 ) : (
                   <span className="avatar" title={user.name} style={{ width: 26, height: 26, fontSize: ".6rem" }}>{initials}</span>
                 )}
-                <span title={user.name}>{user.name?.split(" ")[0]}</span>
+                <span title={user.name} style={{ fontWeight: 600 }}>{user.name}</span>
+                {(user.role === "organizer" || user.role === "admin") && (
+                  <span style={{ background: "var(--green)", color: "#062817", fontSize: "0.62rem", fontWeight: 800, padding: "2px 8px", borderRadius: "10px", letterSpacing: "0.4px" }}>
+                    ORGANIZER & BUILDER
+                  </span>
+                )}
               </Link>
               <button className="btn btn-outline desktop-only" onClick={handleLogout} style={{ gap: "6px" }}>
                 <LogOut size={15}/>{t("logout")}

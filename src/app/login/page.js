@@ -117,13 +117,13 @@ export default function Login() {
 
         <div style={{ display: "flex", alignItems: "center", margin: "16px 0", gap: 12 }}>
           <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
-          <span className="muted" style={{ fontSize: "0.74rem", textTransform: "uppercase", letterSpacing: 0.5 }}>or with email</span>
+          <span className="muted" style={{ fontSize: "0.74rem", textTransform: "uppercase", letterSpacing: 0.5 }}>or with email / username</span>
           <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
         </div>
 
         <form onSubmit={handleSubmit}>
-          <label>Email address</label>
-          <div className="input-wrap"><Mail/><input name="email" type="email" placeholder="you@example.com" required/></div>
+          <label>Email address or Username</label>
+          <div className="input-wrap"><Mail/><input name="email" type="text" placeholder="you@example.com or username (e.g. omi)" required autoCapitalize="none" autoCorrect="off"/></div>
           <label>Password</label>
           <div className="input-wrap"><LockKeyhole/><input name="password" type="password" placeholder="Enter your password" required/></div>
           <div className="form-between"><label className="check-label"><input type="checkbox"/> Remember me</label><a href="#">Forgot password?</a></div>

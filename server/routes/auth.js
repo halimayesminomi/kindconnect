@@ -79,26 +79,33 @@ router.post("/register", async (req, res) => {
 
 /**
  * POST /api/auth/login
- * Login with email and password.
+ * Login with email or username and password.
  */
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, username, password } = req.body;
+    const identifier = (email || username || "").trim().toLowerCase();
 
     // Validate required fields
-    if (!email || !password) {
+    if (!identifier || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required.",
+        message: "Email or username and password are required.",
       });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // Find user by email, username, or alias
+    const user = await User.findOne({
+      $or: [
+        { email: identifier },
+        { username: identifier },
+        ...(identifier === "halima" || identifier === "halima.omi" ? [{ username: "omi" }] : []),
+      ],
+    });
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password.",
+        message: "Invalid email/username or password.",
       });
     }
 
@@ -107,13 +114,20 @@ router.post("/login", async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password.",
+        message: "Invalid email/username or password.",
       });
     }
 
     // Generate JWT
     const token = jwt.sign(
-      { id: user._id, email: user.email, name: user.name, role: user.role },
+      { 
+        id: user._id, 
+        email: user.email, 
+        username: user.username,
+        name: user.name, 
+        role: user.role,
+        designation: user.designation || (user.role === "organizer" ? "Lead Organizer & Builder" : "Volunteer")
+      },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -124,9 +138,11 @@ router.post("/login", async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
+        username: user.username,
         email: user.email,
         photoURL: user.photoURL,
         role: user.role,
+        designation: user.designation || (user.role === "organizer" ? "Lead Organizer & Builder" : "Volunteer"),
       },
     });
   } catch (error) {
@@ -300,9 +316,11 @@ router.get("/user", verifyToken, async (req, res) => {
       data: {
         id: user._id,
         name: user.name,
+        username: user.username,
         email: user.email,
         photoURL: user.photoURL,
         role: user.role,
+        designation: user.designation || (user.role === "organizer" ? "Lead Organizer & Builder" : "Volunteer"),
         createdAt: user.createdAt,
       },
     });

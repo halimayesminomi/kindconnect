@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import { QrCode, CheckCircle2, Award, CalendarDays, Users, Sparkles, ArrowUpRight } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/components/auth-provider";
 import toast from "react-hot-toast";
 
 export default function AttendancePage() {
+  const { user } = useAuth();
+  const isOrganizer = user?.role === "organizer" || user?.role === "admin";
   const [code, setCode] = useState("");
   const [checkingIn, setCheckingIn] = useState(false);
   const [joinedEvents, setJoinedEvents] = useState([]);
@@ -119,8 +122,8 @@ export default function AttendancePage() {
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <h3>Volunteer Event Check-In</h3>
-            <p className="muted">Enter your event check-in code or scan the organizer's QR code.</p>
+            <h3>{isOrganizer ? "Event Attendance & Check-In" : "Volunteer Event Check-In"}</h3>
+            <p className="muted">Enter event check-in code or scan the organizer's QR code.</p>
           </div>
           <span className="status-pill status-green">+50 pts per check-in</span>
         </div>

@@ -21,14 +21,47 @@ export default function Dashboard() {
   const now = new Date();
   const greeting = now.getHours() < 12 ? "Good morning" : now.getHours() < 17 ? "Good afternoon" : "Good evening";
   const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).toUpperCase();
-  const firstName = user?.name?.split(" ")[0] || "there";
+  const isOrganizer = user?.role === "organizer" || user?.role === "admin";
+  const displayName = isOrganizer ? (user?.name || "Halima Yesmin Omi") : (user?.name?.split(" ")[0] || "there");
 
   return <>
+    {isOrganizer && (
+      <div style={{
+        marginBottom: 20,
+        background: "linear-gradient(135deg, rgba(21, 128, 61, 0.15) 0%, rgba(183, 243, 107, 0.08) 100%)",
+        border: "1px solid var(--green)",
+        borderRadius: 14,
+        padding: "14px 20px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: 12
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ background: "var(--green)", color: "#062817", fontWeight: 800, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 8, letterSpacing: "0.5px" }}>
+            ORGANIZER PORTAL
+          </span>
+          <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+            Logged in as <b>{user?.name || "Halima Yesmin Omi"}</b> — Lead Organizer & Platform Builder
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <Link href="/dashboard/create-event" className="btn btn-primary" style={{ padding: "6px 14px", fontSize: "0.78rem" }}>
+            <Plus size={15}/> Host New Event
+          </Link>
+          <Link href="/dashboard/attendance" className="btn btn-outline" style={{ padding: "6px 14px", fontSize: "0.78rem" }}>
+            Organizer QR Code
+          </Link>
+        </div>
+      </div>
+    )}
+
     <div className="dash-heading">
       <div>
         <span className="eyebrow">{dateStr}</span>
-        <h1>{greeting}, {firstName} <span>✳</span></h1>
-        <p className="muted">Ready to make today meaningful?</p>
+        <h1>{greeting}, {displayName} <span>✳</span></h1>
+        <p className="muted">{isOrganizer ? "Welcome back, Lead Organizer. Manage community initiatives and platform events." : "Ready to make today meaningful?"}</p>
       </div>
       <Link href="/dashboard/create-event" className="btn btn-primary"><Plus size={17}/> Create event</Link>
     </div>
@@ -36,7 +69,12 @@ export default function Dashboard() {
       <StatCard icon={Heart} label="Events created" value={myEvents.length} change={`${myEvents.filter(e => new Date(e.date) > new Date()).length} upcoming`}/>
       <StatCard icon={CalendarDays} label="Events joined" value={joinedEvents.length} change={`${upcomingJoined.length} upcoming`}/>
       <StatCard icon={Users} label="Total volunteers" value={myEvents.reduce((a, e) => a + (e.volunteersCount || 0), 0)} change="Across your events"/>
-      <StatCard icon={Clock3} label="Volunteer role" value={user?.role || "user"} change="Active member"/>
+      <StatCard 
+        icon={Clock3} 
+        label={isOrganizer ? "Platform role" : "Volunteer role"} 
+        value={isOrganizer ? "Organizer & Builder" : (user?.role || "Volunteer")} 
+        change={isOrganizer ? "Core System Architect" : "Active member"}
+      />
     </div>
     <div className="dash-columns">
       <section className="panel">
@@ -57,10 +95,10 @@ export default function Dashboard() {
       </section>
       <section className="panel progress-panel">
         <div className="panel-heading"><div><h3>Your impact journey</h3><p className="muted">Keep showing up. It adds up.</p></div></div>
-        <div className="journey-ring"><div><b>{joinedEvents.length}</b><small>events joined</small></div></div>
-        <h4>Active Volunteer</h4>
-        <p className="muted">Keep joining events to grow your impact.</p>
-        <Link href="/dashboard/certificates" className="text-link">View achievements <ArrowUpRight size={15}/></Link>
+        <div className="journey-ring"><div><b>{isOrganizer ? myEvents.length : joinedEvents.length}</b><small>{isOrganizer ? "events hosted" : "events joined"}</small></div></div>
+        <h4>{isOrganizer ? "Lead Organizer & Platform Builder" : "Active Volunteer"}</h4>
+        <p className="muted">{isOrganizer ? "Platform architect, community lead, and creator of KindConnect." : "Keep joining events to grow your impact."}</p>
+        <Link href={isOrganizer ? "/dashboard/events" : "/dashboard/certificates"} className="text-link">{isOrganizer ? "Manage events" : "View achievements"} <ArrowUpRight size={15}/></Link>
       </section>
     </div>
     <div className="tip-banner"><span>✦</span><div><b>Good things grow when shared.</b><p>Invite a friend to join your next volunteering event.</p></div><Link href="/events">Explore together <ArrowUpRight size={15}/></Link></div>

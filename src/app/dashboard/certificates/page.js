@@ -32,7 +32,8 @@ export default function Certificates() {
     window.print();
   };
 
-  const displayName = user?.name || "KindConnect Volunteer";
+  const isOrganizer = user?.role === "organizer" || user?.role === "admin";
+  const displayName = user?.name || (isOrganizer ? "Halima Yesmin Omi" : "KindConnect Member");
 
   return <>
     <div className="dash-heading">
@@ -113,18 +114,29 @@ export default function Certificates() {
 
             <Award size={48} style={{ color: "var(--green)", margin: "20px auto 10px" }} />
             <h2 style={{ fontSize: "1.8rem", letterSpacing: "3px", textTransform: "uppercase", margin: "10px 0 6px", fontFamily: "var(--font-heading)" }}>
-              Certificate of Community Service
+              {isOrganizer ? "Certificate of Leadership & System Architecture" : "Certificate of Community Service"}
             </h2>
-            <p className="muted" style={{ fontSize: ".82rem" }}>This certificate is proudly awarded to</p>
+            <p className="muted" style={{ fontSize: ".82rem" }}>
+              {isOrganizer ? "This credential of platform leadership is proudly conferred to" : "This certificate is proudly awarded to"}
+            </p>
 
             <h1 style={{ fontSize: "2.6rem", color: "#ffffff", margin: "14px 0", fontWeight: 800 }}>
               {displayName}
             </h1>
 
             <p style={{ maxWidth: 600, margin: "0 auto 20px", fontSize: ".9rem", color: "#c8d4cb", lineHeight: 1.8 }}>
-              In grateful recognition of your voluntary service and dedicated contribution to{" "}
-              <b style={{ color: "var(--green)" }}>{selectedCert?.eventId?.title || "Community Development Initiative"}</b>.
-              Your compassion and action have created positive, lasting impact.
+              {isOrganizer ? (
+                <>
+                  In proud recognition of your exceptional initiative and technical execution as{" "}
+                  <b style={{ color: "var(--green)" }}>Lead Organizer & Platform Builder</b> of the KindConnect Social Development Platform.
+                </>
+              ) : (
+                <>
+                  In grateful recognition of your voluntary service and dedicated contribution to{" "}
+                  <b style={{ color: "var(--green)" }}>{selectedCert?.eventId?.title || "Community Development Initiative"}</b>.
+                  Your compassion and action have created positive, lasting impact.
+                </>
+              )}
             </p>
 
             <div style={{ display: "flex", justifyContent: "center", gap: 40, marginTop: 30, borderTop: "1px solid rgba(183, 243, 107, 0.2)", paddingTop: 20 }}>

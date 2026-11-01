@@ -6,6 +6,12 @@ const userSchema = new mongoose.Schema({
     required: [true, "Name is required"],
     trim: true,
   },
+  username: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    sparse: true,
+  },
   email: {
     type: String,
     required: [true, "Email is required"],
@@ -26,6 +32,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["user", "organizer", "admin"],
     default: "user",
+  },
+  designation: {
+    type: String,
+    default: "Volunteer",
   },
   createdAt: {
     type: Date,
