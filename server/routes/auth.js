@@ -139,6 +139,63 @@ router.post("/login", async (req, res) => {
 });
 
 /**
+ * POST /api/auth/social
+ * Social login (Google / GitHub) option per Section 4.1.
+ */
+router.post("/social", async (req, res) => {
+  try {
+    const { provider, email, name, photoURL } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required for social login.",
+      });
+    }
+
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      const salt = await bcrypt.genSalt(10);
+      const randomPassword = Math.random().toString(36).slice(-10) + "A1!";
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+      user = await User.create({
+        name: name || (provider === "google" ? "Google User" : "GitHub Volunteer"),
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        photoURL: photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+        role: "user",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, name: user.name, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        photoURL: user.photoURL,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Social login error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Server error during social login.",
+    });
+  }
+});
+
+/**
  * GET /api/auth/user
  * Get currently authenticated user data (protected).
  */

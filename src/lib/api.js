@@ -20,6 +20,7 @@ export const api = {
   // Auth
   register: (body) => request("/auth/register", { method: "POST", body: JSON.stringify(body) }),
   login: (body) => request("/auth/login", { method: "POST", body: JSON.stringify(body) }),
+  socialLogin: (body) => request("/auth/social", { method: "POST", body: JSON.stringify(body) }),
   getUser: () => request("/auth/user"),
 
   // Events

@@ -38,13 +38,23 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const socialLogin = async (provider = "google") => {
+    const defaultData = provider === "google" 
+      ? { provider: "google", email: "google.volunteer@kindconnect.org", name: "Google Volunteer", photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" }
+      : { provider: "github", email: "github.volunteer@kindconnect.org", name: "GitHub Volunteer", photoURL: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80" };
+    const data = await api.socialLogin(defaultData);
+    localStorage.setItem("kindconnect_token", data.token);
+    setUser(data.user);
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem("kindconnect_token");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, socialLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

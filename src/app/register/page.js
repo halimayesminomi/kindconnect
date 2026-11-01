@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 
 export default function Register() {
   const router = useRouter();
-  const { register, user } = useAuth();
+  const { register, socialLogin, user } = useAuth();
   const [loading, setLoading] = useState(false);
 
   if (user) { router.push("/dashboard"); return null; }
@@ -50,6 +50,38 @@ export default function Register() {
         <span className="eyebrow">START YOUR JOURNEY</span>
         <h2>Create your account.</h2>
         <p className="muted">A few details and you're ready to make a difference.</p>
+
+        {/* Social Sign Up Button */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "20px 0 16px 0" }}>
+          <button
+            type="button"
+            className="btn btn-outline btn-block"
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await socialLogin("google");
+                toast.success("Account created with Google! 🎉");
+                router.push("/dashboard");
+              } catch (e) {
+                toast.error("Google sign up failed.");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontWeight: 600 }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5.1 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.8s.2-2.1.4-2.8L1.9 6.3C.7 8.7 0 10.3 0 12s.7 3.3 1.9 5.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.4C3.7 20.1 7.5 23 12 23z"/></svg>
+            Sign up with Google
+          </button>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", margin: "16px 0", gap: 12 }}>
+          <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
+          <span className="muted" style={{ fontSize: "0.74rem", textTransform: "uppercase", letterSpacing: 0.5 }}>or with email</span>
+          <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
+        </div>
+
         <form onSubmit={handleSubmit}>
           <label>Full name</label>
           <div className="input-wrap"><User/><input name="fullname" placeholder="Your full name" required/></div>
