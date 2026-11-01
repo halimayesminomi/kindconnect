@@ -1,0 +1,461 @@
+{
+  "info": {
+    "name": "KindConnect API - CSE 35+36 Web Programming Lab",
+    "description": "API collection for KindConnect: Social Development & Volunteer Management Platform.\nDeveloped by Halima Yesmin Omi (251-112-001) & Shraboni Das (251-112-006).\nInstructor: Mr. Abu Jafar Md. Jakaria.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sampleEventId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Volunteer Demo\",\n  \"email\": \"volunteer.test@kindconnect.org\",\n  \"password\": \"password123\",\n  \"role\": \"volunteer\",\n  \"photoURL\": \"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login (Organizer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('authToken', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"halima@kindconnect.org\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login (Volunteer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"shraboni@kindconnect.org\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Events Module",
+      "item": [
+        {
+          "name": "Get All Events (with filters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events?search=dhaka&type=tree-plantation",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "dhaka"
+                },
+                {
+                  "key": "type",
+                  "value": "tree-plantation"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Featured Events (Home Page)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/featured",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "featured"]
+            }
+          }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Winter Blanket Drive 2026\",\n  \"description\": \"Collecting and distributing heavy fleece blankets to homeless families in Mirpur and Kuril.\",\n  \"type\": \"winter-clothes\",\n  \"location\": \"Mirpur 10, Dhaka\",\n  \"eventDate\": \"2026-12-15T10:00:00.000Z\",\n  \"capacity\": 60,\n  \"image\": \"https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1200&q=80\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        },
+        {
+          "name": "Get Single Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{sampleEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{sampleEventId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Event (Owner only)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Winter Blanket Drive 2026 (Updated Capacity)\",\n  \"capacity\": 80\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/{{sampleEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{sampleEventId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Event (Owner only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{sampleEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{sampleEventId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Registrations Module",
+      "item": [
+        {
+          "name": "Join Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/registrations/{{sampleEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["registrations", "{{sampleEventId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get My Joined Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/registrations/my-events",
+              "host": ["{{baseUrl}}"],
+              "path": ["registrations", "my-events"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Registration",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/registrations/{{sampleEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["registrations", "{{sampleEventId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. QR Attendance & Badges",
+      "item": [
+        {
+          "name": "Get Event Check-In Code (Organizer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/code/{{sampleEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "code", "{{sampleEventId}}"]
+            }
+          }
+        },
+        {
+          "name": "Check In via QR / Code (Volunteer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"checkInCode\": \"KC-DB290C\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-in",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "check-in"]
+            }
+          }
+        },
+        {
+          "name": "Get My Badges & Verified Points",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/my-badges",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "my-badges"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. In-App Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/<NOTIFICATION_ID>/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "<NOTIFICATION_ID>", "read"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Emergency Relief Requests",
+      "item": [
+        {
+          "name": "Get All Active Relief Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/emergency",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency"]
+            }
+          }
+        },
+        {
+          "name": "Submit Emergency Relief Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Urgent Flash Flood Relief Packets\",\n  \"urgency\": \"critical\",\n  \"location\": \"Sylhet Sadar\",\n  \"description\": \"Clean water purification tablets, dry food, and rehydration salts needed immediately.\",\n  \"targetPeople\": 500,\n  \"contactPhone\": \"+880 1711-998877\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/emergency",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency"]
+            }
+          }
+        },
+        {
+          "name": "Join Emergency Response Team",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/emergency/<REQUEST_ID>/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency", "<REQUEST_ID>", "join"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

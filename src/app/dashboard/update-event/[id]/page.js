@@ -1,0 +1,114 @@
+"use client";
+
+import { useRouter, useParams } from "next/navigation";
+import { ArrowUpRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
+import toast from "react-hot-toast";
+
+const categories = ["Environment", "Education", "Community", "Health", "Animals", "Emergency", "Other"];
+
+export default function UpdateEvent() {
+  const router = useRouter();
+  const { id } = useParams();
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [event, setEvent] = useState(null);
+
+  useEffect(() => {
+    api.getEvent(id)
+      .then(res => setEvent(res.data))
+      .catch(() => { toast.error("Event not found."); router.push("/dashboard/events"); })
+      .finally(() => setFetching(false));
+  }, [id]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const data = {
+      title: form.title.value.trim(),
+      description: form.description.value.trim(),
+      category: form.category.value,
+      image: form.image.value.trim(),
+      location: form.location.value.trim(),
+      date: form.date.value,
+      time: form.time.value.trim(),
+      capacity: Number(form.capacity.value),
+    };
+
+    if (!data.title || !data.description || !data.category || !data.image || !data.location || !data.date || !data.time || !data.capacity) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
+    if (data.capacity < 1) {
+      toast.error("Capacity must be at least 1.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.updateEvent(id, data);
+      toast.success("Event updated successfully! ✅");
+      router.push("/dashboard/events");
+    } catch (err) {
+      toast.error(err.message || "Failed to update event.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetching) return <p className="muted" style={{padding:"50px 0"}}>Loading event...</p>;
+  if (!event) return null;
+
+  const dateValue = new Date(event.date).toISOString().split("T")[0];
+
+  return <>
+    <div className="dash-heading">
+      <div>
+        <span className="eyebrow">EDIT EVENT</span>
+        <h1>Update event</h1>
+        <p className="muted">Modify the details of your event.</p>
+      </div>
+    </div>
+    <div className="panel" style={{maxWidth:700}}>
+      <form onSubmit={handleSubmit}>
+        <label style={{display:"block",fontSize:".76rem",fontWeight:700,margin:"15px 0 7px"}}>Event title</label>
+        <div className="input-wrap"><input name="title" defaultValue={event.title} required/></div>
+
+        <label style={{display:"block",fontSize:".76rem",fontWeight:700,margin:"15px 0 7px"}}>Description</label>
+        <textarea name="description" defaultValue={event.description} required style={{width:"100%",minHeight:120,padding:"13px",border:"1px solid var(--line)",borderRadius:"9px",background:"var(--panel)",color:"var(--text)",fontSize:".83rem",fontFamily:"inherit",resize:"vertical",outline:"none"}}/>
+
+        <label style={{display:"block",fontSize:".76rem",fontWeight:700,margin:"15px 0 7px"}}>Category</label>
+        <select name="category" defaultValue={event.category} required style={{width:"100%",height:48,padding:"0 13px",border:"1px solid var(--line)",borderRadius:"9px",background:"var(--panel)",color:"var(--text)",fontSize:".83rem",outline:"none"}}>
+          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+
+        <label style={{display:"block",fontSize:".76rem",fontWeight:700,margin:"15px 0 7px"}}>Thumbnail image URL</label>
+        <div className="input-wrap"><input name="image" type="url" defaultValue={event.image} required/></div>
+
+        <label style={{display:"block",fontSize:".76rem",fontWeight:700,margin:"15px 0 7px"}}>Location</label>
+        <div className="input-wrap"><input name="location" defaultValue={event.location} required/></div>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:15}}>
+          <div>
+            <label style={{display:"block",fontSize:".76rem",fontWeight:700,margin:"15px 0 7px"}}>Date</label>
+            <div className="input-wrap"><input name="date" type="date" defaultValue={dateValue} required style={{colorScheme:"dark"}}/></div>
+          </div>
+          <div>
+            <label style={{display:"block",fontSize:".76rem",fontWeight:700,margin:"15px 0 7px"}}>Time</label>
+            <div className="input-wrap"><input name="time" defaultValue={event.time} required/></div>
+          </div>
+          <div>
+            <label style={{display:"block",fontSize:".76rem",fontWeight:700,margin:"15px 0 7px"}}>Capacity</label>
+            <div className="input-wrap"><input name="capacity" type="number" min="1" defaultValue={event.capacity} required/></div>
+          </div>
+        </div>
+
+        <div style={{display:"flex",gap:12,marginTop:28}}>
+          <button className="btn btn-primary" type="submit" disabled={loading}>{loading ? "Updating..." : "Update event"} {!loading && <ArrowUpRight size={17}/>}</button>
+          <button className="btn btn-ghost" type="button" onClick={() => router.back()}>Cancel</button>
+        </div>
+      </form>
+    </div>
+  </>;
+}
