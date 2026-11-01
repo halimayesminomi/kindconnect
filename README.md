@@ -25,6 +25,7 @@ KindConnect is a full-stack, community-driven web platform designed to connect p
 
 ### 1. Authentication & Security
 - **Email & Password Authentication**: Passwords hashed with `bcryptjs` (salt rounds: 10).
+- **Social Login Option**: Quick single-click Google authentication with automated profile creation and JWT issuance.
 - **JWT Protection**: Secure API endpoints validated with JSON Web Tokens (`Authorization: Bearer <token>`).
 - **Server-Side Ownership Enforcement**: Only event creators can modify or delete their events.
 - **Conditional Navigation**: Dynamic navbar displaying login/register for visitors and profile avatar, name, and logout for authenticated users.
