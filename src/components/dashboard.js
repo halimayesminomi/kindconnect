@@ -165,11 +165,11 @@ export function DashboardShell({ children, user }) {
             )}
           </div>
 
-          <div className="profile-mini">
+          <div className="profile-mini" title={displayName}>
             {user?.photoURL ? (
-              <img src={user.photoURL} alt="" style={{width:34,height:34,borderRadius:"50%",objectFit:"cover"}} />
+              <img src={user.photoURL} alt={displayName} title={displayName} style={{width:34,height:34,borderRadius:"50%",objectFit:"cover"}} />
             ) : (
-              <span className="avatar">{initials}</span>
+              <span className="avatar" title={displayName}>{initials}</span>
             )}
             <span><b>{displayName}</b><small>{role}</small></span>
             <ChevronDown size={15}/>

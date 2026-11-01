@@ -74,11 +74,11 @@ export function Navbar() {
 
           {user ? (
             <>
-              <Link className="btn btn-ghost desktop-only" href="/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+              <Link className="btn btn-ghost desktop-only" href="/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: "8px" }} title={user.name}>
                 {user.photoURL ? (
-                  <img src={user.photoURL} alt="" style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }} />
+                  <img src={user.photoURL} alt={user.name} title={user.name} style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }} />
                 ) : (
-                  <span className="avatar" style={{ width: 26, height: 26, fontSize: ".6rem" }}>{initials}</span>
+                  <span className="avatar" title={user.name} style={{ width: 26, height: 26, fontSize: ".6rem" }}>{initials}</span>
                 )}
                 <span title={user.name}>{user.name?.split(" ")[0]}</span>
               </Link>
