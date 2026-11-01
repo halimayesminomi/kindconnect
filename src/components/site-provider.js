@@ -55,27 +55,52 @@ export function SiteProvider({ children }) {
   const [theme, setTheme] = useState("dark");
   const [lang, setLang] = useState("en");
 
+  // Load saved theme and language
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("kindconnect_theme") || "dark";
+    const savedLang = localStorage.getItem("kindconnect_lang") || "en";
+    setTheme(savedTheme);
+    setLang(savedLang);
+  }, []);
+
+  // Sync theme with HTML root and localStorage
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("data-theme", theme);
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      document.documentElement.classList.toggle("light", theme === "light");
+      document.body.setAttribute("data-theme", theme);
+      localStorage.setItem("kindconnect_theme", theme);
+    }
+  }, [theme]);
+
+  // Sync language with localStorage
+  useEffect(() => {
+    localStorage.setItem("kindconnect_lang", lang);
+  }, [lang]);
+
   const t = (key) => translations[lang]?.[key] || translations.en[key] || key;
 
   return (
     <SiteContext.Provider value={{ theme, setTheme, lang, setLang, t }}>
       <AuthProvider>
-        <div data-theme={theme}>
+        <div data-theme={theme} className={theme === "light" ? "light" : "dark"} style={{ minHeight: "100vh" }}>
           {children}
           <Toaster
             position="top-center"
             toastOptions={{
               duration: 3000,
               style: {
-                background: theme === "dark" ? "#1a2420" : "#fff",
-                color: theme === "dark" ? "#f2f6f2" : "#17221a",
-                border: `1px solid ${theme === "dark" ? "#26312b" : "#dce5dc"}`,
+                background: theme === "dark" ? "#1a2420" : "#ffffff",
+                color: theme === "dark" ? "#f2f6f2" : "#0f1712",
+                border: `1px solid ${theme === "dark" ? "#26312b" : "#d1ded4"}`,
                 borderRadius: "12px",
                 fontSize: "0.85rem",
                 fontWeight: 600,
+                boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
               },
-              success: { iconTheme: { primary: "#b7f36b", secondary: "#14200f" } },
-              error: { iconTheme: { primary: "#ff6b6b", secondary: "#fff" } },
+              success: { iconTheme: { primary: theme === "dark" ? "#b7f36b" : "#15803d", secondary: "#ffffff" } },
+              error: { iconTheme: { primary: "#ef4444", secondary: "#ffffff" } },
             }}
           />
         </div>
