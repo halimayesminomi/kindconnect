@@ -48,13 +48,20 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const loginWithGoogle = async (credential, userInfo) => {
+    const data = await api.googleLogin(credential, userInfo);
+    localStorage.setItem("kindconnect_token", data.token);
+    setUser(data.user);
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem("kindconnect_token");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, socialLogin, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, socialLogin, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

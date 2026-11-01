@@ -21,6 +21,7 @@ export const api = {
   register: (body) => request("/auth/register", { method: "POST", body: JSON.stringify(body) }),
   login: (body) => request("/auth/login", { method: "POST", body: JSON.stringify(body) }),
   socialLogin: (body) => request("/auth/social", { method: "POST", body: JSON.stringify(body) }),
+  googleLogin: (credential, userInfo) => request("/auth/google", { method: "POST", body: JSON.stringify({ credential, userInfo }) }),
   getUser: () => request("/auth/user"),
 
   // Events
