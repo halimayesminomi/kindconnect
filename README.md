@@ -182,6 +182,9 @@ npm run dev
 
 ## 📡 API Endpoints Reference
 
+### Postman Collection
+A complete Postman Collection file is available in the root directory: [`kindconnect-api.postman_collection.json`](file:///d:/ja%20p2/kindconnect-ui/kindconnect-api.postman_collection.json). Simply import it into Postman to test all endpoints.
+
 ### Authentication (`/api/auth`)
 - `POST /api/auth/register` — Register a new account
 - `POST /api/auth/login` — Sign in and receive JWT
