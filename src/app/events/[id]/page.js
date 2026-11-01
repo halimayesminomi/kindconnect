@@ -109,11 +109,14 @@ export default function EventDetails() {
         ) : hasJoined ? (
           <button className="btn btn-outline btn-block" onClick={handleCancel} disabled={joining}>{joining ? "Cancelling..." : "Cancel Registration"}</button>
         ) : isFull ? (
-          <button className="btn btn-ghost btn-block" disabled>Event is full</button>
+          <button className="btn btn-outline btn-block" style={{ borderColor: "#d97706", color: "#d97706" }} onClick={handleJoin} disabled={joining}>
+            {joining ? "Joining..." : "Join Waiting List"} {!joining && <Clock3 size={16}/>}
+          </button>
         ) : (
           <button className="btn btn-primary btn-block" onClick={handleJoin} disabled={joining}>{joining ? "Joining..." : "Join this event"} {!joining && <ArrowUpRight size={17}/>}</button>
         )}
         {!user && !isPast && <small className="muted center-note">Sign in to register your interest.</small>}
+        {isFull && !hasJoined && !isPast && <small className="muted center-note" style={{color:"#d97706"}}>Event is at capacity. Joining places you on the automated waitlist.</small>}
         {hasJoined && <small className="muted center-note" style={{color:"var(--green)"}}>✓ You're registered for this event!</small>}
       </aside>
     </div>

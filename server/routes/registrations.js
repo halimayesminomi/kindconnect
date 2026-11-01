@@ -50,13 +50,9 @@ router.post("/", verifyToken, async (req, res) => {
       });
     }
 
-    // Check if event has capacity
-    if (event.volunteersCount >= event.capacity) {
-      return res.status(400).json({
-        success: false,
-        message: "Event has reached maximum capacity.",
-      });
-    }
+    // Determine if event is full -> assign to waiting list
+    const isFull = event.volunteersCount >= event.capacity;
+    const registrationStatus = isFull ? "waitlist" : "confirmed";
 
     // Create registration
     const registration = await Registration.create({
@@ -64,20 +60,28 @@ router.post("/", verifyToken, async (req, res) => {
       userId: req.user.id,
       userEmail: req.user.email,
       userName: req.user.name,
+      status: registrationStatus,
     });
 
-    // Increment volunteersCount
-    await Event.findByIdAndUpdate(eventId, {
-      $inc: { volunteersCount: 1 },
-    });
+    // Increment volunteersCount only if confirmed
+    if (!isFull) {
+      await Event.findByIdAndUpdate(eventId, {
+        $inc: { volunteersCount: 1 },
+      });
+    }
 
-    // Create confirmation notification
+    // Create confirmation or waitlist notification
     try {
+      const notifTitle = isFull ? "Added to Waiting List ⏳" : "Registration Confirmed ✨";
+      const notifMsg = isFull
+        ? `Event capacity (${event.capacity}) reached. You have been placed on the waiting list for "${event.title}". You will be automatically moved to confirmed if a spot opens up.`
+        : `You are registered for "${event.title}" on ${new Date(event.date).toLocaleDateString()}.`;
+
       await Notification.create({
         userId: req.user.id,
-        title: "Registration Confirmed ✨",
-        message: `You are registered for "${event.title}" on ${new Date(event.date).toLocaleDateString()}.`,
-        type: "info",
+        title: notifTitle,
+        message: notifMsg,
+        type: isFull ? "warning" : "info",
       });
     } catch (notifErr) {
       console.warn("Notification error:", notifErr.message);
@@ -85,6 +89,10 @@ router.post("/", verifyToken, async (req, res) => {
 
     return res.status(201).json({
       success: true,
+      isWaitlisted: isFull,
+      message: isFull
+        ? "Event is full. You have been added to the waiting list!"
+        : "Registered successfully!",
       data: registration,
     });
   } catch (error) {
@@ -126,10 +134,37 @@ router.delete("/:eventId", verifyToken, async (req, res) => {
       });
     }
 
-    // Decrement volunteersCount
-    await Event.findByIdAndUpdate(eventId, {
-      $inc: { volunteersCount: -1 },
-    });
+    // If the cancelled registration was confirmed, see if we can promote a waitlisted user
+    if (registration.status === "confirmed") {
+      const nextWaitlisted = await Registration.findOne({
+        eventId,
+        status: "waitlist",
+      }).sort({ registeredAt: 1 });
+
+      if (nextWaitlisted) {
+        // Promote waitlisted volunteer to confirmed
+        nextWaitlisted.status = "confirmed";
+        await nextWaitlisted.save();
+
+        // Send promotion notification
+        try {
+          const relatedEvent = await Event.findById(eventId);
+          await Notification.create({
+            userId: nextWaitlisted.userId,
+            title: "Spot Opened! You are Confirmed 🎉",
+            message: `A volunteer spot opened up for "${relatedEvent?.title || 'your event'}" and your waiting-list registration is now Confirmed!`,
+            type: "success",
+          });
+        } catch (promoteErr) {
+          console.warn("Waitlist notification error:", promoteErr.message);
+        }
+      } else {
+        // No waitlist waiting -> decrement active volunteer count
+        await Event.findByIdAndUpdate(eventId, {
+          $inc: { volunteersCount: -1 },
+        });
+      }
+    }
 
     return res.status(200).json({
       success: true,

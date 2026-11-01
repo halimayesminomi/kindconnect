@@ -56,7 +56,18 @@ export default function Joined() {
           return <article className="joined-card" key={r._id}>
             <div className="joined-thumb" style={{ backgroundImage: `url(${e.image})` }}/>
             <div className="joined-info">
-              <span className="eyebrow">{isUpcoming ? "UPCOMING" : "COMPLETED"}</span>
+              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                <span className="eyebrow">{isUpcoming ? "UPCOMING" : "COMPLETED"}</span>
+                {r.status === "waitlist" ? (
+                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#fef3c7", color: "#b45309", padding: "2px 8px", borderRadius: "999px" }}>
+                    WAITING LIST ⏳
+                  </span>
+                ) : (
+                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#dcfce7", color: "#15803d", padding: "2px 8px", borderRadius: "999px" }}>
+                    CONFIRMED ✓
+                  </span>
+                )}
+              </div>
               <h3>{e.title}</h3>
               <p className="muted"><CalendarDays size={14}/>{dateStr} · {e.time}</p>
               <p className="muted"><MapPin size={14}/>{e.location}</p>
