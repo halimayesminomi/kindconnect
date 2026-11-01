@@ -103,6 +103,41 @@
           }
         },
         {
+          "name": "Social Login (Google/GitHub)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('authToken', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"google\",\n  \"email\": \"google.volunteer@kindconnect.org\",\n  \"name\": \"Google Volunteer\",\n  \"photoURL\": \"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/social",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "social"]
+            }
+          }
+        },
+        {
           "name": "Get Current Profile (Me)",
           "request": {
             "method": "GET",
