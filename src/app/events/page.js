@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal, MapPin, LayoutGrid, Map as MapIcon, ArrowUpRight, CalendarDays, Users } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, LayoutGrid, Map as MapIcon, ArrowUpRight, CalendarDays, Users, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { PublicLayout } from "@/components/site";
 import { EventCard } from "@/components/cards";
@@ -17,6 +17,7 @@ const DHAKA_LOCATIONS = [
 
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
@@ -30,6 +31,10 @@ export default function EventsPage() {
       .then(res => setEvents(res.data || []))
       .catch(() => setEvents([]))
       .finally(() => setLoading(false));
+
+    api.getRecommendations()
+      .then(res => setRecommendations(res.data || []))
+      .catch(() => setRecommendations([]));
   }, []);
 
   const filtered = useMemo(() =>
@@ -94,6 +99,55 @@ export default function EventsPage() {
         </button>
       ))}
     </div>
+
+    {/* AI Smart Recommendations (Future Scope Feature 4.3) */}
+    {!query && category === "All" && recommendations.length > 0 && viewMode === "grid" && (
+      <div style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(16,185,129,0.02))", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 16, padding: "20px 24px", marginBottom: 32 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "50%", background: "var(--green)", color: "#14200f" }}>
+              <Sparkles size={18} />
+            </span>
+            <div>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700 }}>AI Recommended For You</h3>
+              <p className="muted" style={{ margin: 0, fontSize: "0.78rem" }}>Personalized recommendations based on community service history, location, and cause affinity.</p>
+            </div>
+          </div>
+          <span style={{ fontSize: "0.72rem", background: "var(--surface)", border: "1px solid var(--line)", padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+            ⚡ Real-time Smart Match
+          </span>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+          {recommendations.map(e => (
+            <div key={e._id} style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <div style={{ height: 120, backgroundImage: `url(${e.image})`, backgroundSize: "cover", backgroundPosition: "center", position: "relative" }}>
+                <span style={{ position: "absolute", top: 8, right: 8, background: "#15803d", color: "#fff", padding: "2px 8px", borderRadius: 999, fontSize: "0.7rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+                  <Sparkles size={11} /> {e.aiMatchScore}% Match
+                </span>
+                <span style={{ position: "absolute", bottom: 8, left: 8, background: "rgba(0,0,0,0.65)", color: "#fff", padding: "2px 8px", borderRadius: 6, fontSize: "0.68rem" }}>
+                  {e.category}
+                </span>
+              </div>
+              <div style={{ padding: 14, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <div>
+                  <h4 style={{ margin: "0 0 6px 0", fontSize: "0.92rem", fontWeight: 700, lineHeight: 1.3 }}>{e.title}</h4>
+                  <p style={{ margin: "0 0 8px 0", fontSize: "0.72rem", color: "var(--green)", fontWeight: 600 }}>
+                    💡 {e.aiReason}
+                  </p>
+                  <p className="muted" style={{ margin: 0, fontSize: "0.72rem", display: "flex", alignItems: "center", gap: 4 }}>
+                    <MapPin size={12} /> {e.location}
+                  </p>
+                </div>
+                <Link href={`/events/${e._id}`} className="btn btn-outline" style={{ marginTop: 12, fontSize: "0.74rem", padding: "6px 10px", justifyContent: "center" }}>
+                  View Opportunity <ArrowUpRight size={13} />
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
 
     <div className="results-line">
       <span>{loading ? "Loading..." : `${filtered.length} opportunities found`}</span>

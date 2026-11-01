@@ -25,6 +25,7 @@ export const api = {
   // Events
   getEvents: (params = "") => request(`/events${params ? `?${params}` : ""}`),
   getRecentEvents: () => request("/events/recent"),
+  getRecommendations: () => request("/events/recommendations"),
   getEvent: (id) => request(`/events/${id}`),
   createEvent: (body) => request("/events", { method: "POST", body: JSON.stringify(body) }),
   updateEvent: (id, body) => request(`/events/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
