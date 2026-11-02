@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, CalendarDays, Clock3, MapPin, Users, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CalendarDays, Clock3, MapPin, Users, CheckCircle2, MessageSquare, Send, Lock } from "lucide-react";
 import { PublicLayout } from "@/components/site";
 import { useAuth } from "@/components/auth-provider";
 import { api } from "@/lib/api";
@@ -17,6 +17,49 @@ export default function EventDetails() {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatText, setChatText] = useState("");
+  const [sendingChat, setSendingChat] = useState(false);
+
+  const isCreatorOrAdmin = Boolean(
+    user && event && (user.email === event.creatorEmail || user.role === "admin")
+  );
+  const canChat = hasJoined || isCreatorOrAdmin;
+
+  const fetchChatMessages = (silent = false) => {
+    if (event?._id && canChat) {
+      api.getEventMessages(event._id)
+        .then(res => setChatMessages(res.data?.messages || []))
+        .catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    if (canChat && event?._id) {
+      fetchChatMessages();
+      const interval = setInterval(() => fetchChatMessages(true), 4000);
+      return () => clearInterval(interval);
+    }
+  }, [canChat, event?._id]);
+
+  const handleSendChat = async (e) => {
+    e.preventDefault();
+    const text = chatText.trim();
+    if (!text || sendingChat) return;
+
+    setSendingChat(true);
+    setChatText("");
+    try {
+      const res = await api.sendEventMessage(event._id, text);
+      if (res.data) {
+        setChatMessages(prev => [...prev, res.data]);
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to send message.");
+    } finally {
+      setSendingChat(false);
+    }
+  };
 
   useEffect(() => {
     api.getEvent(id)
@@ -93,6 +136,137 @@ export default function EventDetails() {
             <span><CheckCircle2 size={16}/>Open to all volunteers</span>
             <span><CheckCircle2 size={16}/>Community-led activity</span>
             <span><CheckCircle2 size={16}/>Participation recognition</span>
+          </div>
+
+          {/* Event Community Group Chat Section */}
+          <div style={{ marginTop: 32, padding: "20px", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: 8, fontSize: "1.05rem" }}>
+                  <MessageSquare size={18} color="var(--green)" /> Event Volunteer Group Chat
+                </h3>
+                <p className="muted" style={{ fontSize: "0.75rem", margin: "2px 0 0" }}>
+                  Dedicated discussion room for volunteers and organizers of this event.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <Link
+                  href="/dashboard/chat"
+                  className="btn btn-outline"
+                  style={{ padding: "6px 12px", fontSize: "0.74rem", display: "inline-flex", alignItems: "center", gap: 5 }}
+                >
+                  🛡️ Chat with Admin
+                </Link>
+                {canChat && (
+                  <Link
+                    href={`/dashboard/chat?event=${event._id}`}
+                    className="btn btn-primary"
+                    style={{ padding: "6px 12px", fontSize: "0.74rem" }}
+                  >
+                    Open in Full Chat ↗
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {canChat ? (
+              <div>
+                {/* Messages stream */}
+                <div style={{
+                  maxHeight: 280,
+                  overflowY: "auto",
+                  padding: "14px",
+                  borderRadius: 12,
+                  background: "var(--bg)",
+                  border: "1px solid var(--line)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  marginBottom: 12
+                }}>
+                  {chatMessages.length === 0 ? (
+                    <p className="muted" style={{ textAlign: "center", fontSize: "0.78rem", padding: "30px 0" }}>
+                      No messages in this group yet. Say hello to fellow volunteers! 👋
+                    </p>
+                  ) : (
+                    chatMessages.map(msg => {
+                      const isMe = user && ((msg.sender === user._id) || (msg.sender === user.id) || (msg.sender?._id === user._id));
+                      const isAdminMsg = msg.senderRole === "admin" || msg.senderUsername === "omi";
+                      return (
+                        <div key={msg._id} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.68rem", color: "var(--muted)", marginBottom: 2 }}>
+                            <b style={{ color: isMe ? "var(--green)" : "inherit" }}>{isMe ? "You" : msg.senderName}</b>
+                            {isAdminMsg && (
+                              <span style={{ background: "#ef4444", color: "#fff", fontSize: "0.55rem", fontWeight: 800, padding: "1px 5px", borderRadius: 4 }}>
+                                ADMIN & BUILDER
+                              </span>
+                            )}
+                            <small>{new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>
+                          </div>
+                          <div style={{
+                            padding: "8px 12px",
+                            borderRadius: 12,
+                            fontSize: "0.82rem",
+                            background: isMe ? "var(--green)" : isAdminMsg ? "rgba(239, 68, 68, 0.15)" : "var(--panel)",
+                            color: isMe ? "#062817" : "var(--text)",
+                            border: `1px solid ${isMe ? "transparent" : "var(--line)"}`,
+                            maxWidth: "80%"
+                          }}>
+                            {msg.text}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Input form */}
+                <form onSubmit={handleSendChat} style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="text"
+                    placeholder="Type a message to the event group..."
+                    value={chatText}
+                    onChange={e => setChatText(e.target.value)}
+                    disabled={sendingChat}
+                    style={{
+                      flex: 1,
+                      padding: "8px 14px",
+                      borderRadius: 10,
+                      border: "1px solid var(--line)",
+                      background: "var(--bg)",
+                      color: "var(--text)",
+                      fontSize: "0.82rem",
+                      outline: "none"
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={sendingChat || !chatText.trim()}
+                    className="btn btn-primary"
+                    style={{ padding: "8px 16px", fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    <span>Send</span> <Send size={14} />
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "24px 16px", background: "var(--bg)", borderRadius: 12, border: "1px dashed var(--line)" }}>
+                <Lock size={22} color="var(--muted)" style={{ margin: "0 auto 8px" }} />
+                <h4 style={{ margin: 0, fontSize: "0.95rem" }}>Event Group Chat is Reserved for Attendees</h4>
+                <p className="muted" style={{ fontSize: "0.76rem", margin: "4px auto 14px", maxWidth: 360 }}>
+                  Join this event to collaborate with fellow volunteers in the group chat and coordinate logistics!
+                </p>
+                {!user ? (
+                  <Link href="/login" className="btn btn-primary" style={{ padding: "6px 16px", fontSize: "0.78rem" }}>
+                    Sign In to Join Event
+                  </Link>
+                ) : (
+                  <button onClick={handleJoin} disabled={joining} className="btn btn-primary" style={{ padding: "6px 16px", fontSize: "0.78rem" }}>
+                    {joining ? "Joining..." : "Join Event to Unlock Group Chat"}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

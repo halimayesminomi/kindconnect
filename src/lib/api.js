@@ -68,4 +68,14 @@ export const api = {
   verifyAdminEmergency: (id, body) => request(`/admin/emergency/${id}/verify`, { method: "PATCH", body: JSON.stringify(body) }),
   deleteAdminEmergency: (id) => request(`/admin/emergency/${id}`, { method: "DELETE" }),
   getAdminRegistrations: () => request("/admin/registrations"),
+
+  // Community & Event Chat
+  getChatEvents: () => request("/chat/my-events"),
+  getEventMessages: (eventId) => request(`/chat/events/${eventId}/messages`),
+  sendEventMessage: (eventId, text) => request(`/chat/events/${eventId}/messages`, { method: "POST", body: JSON.stringify({ text }) }),
+  getDirectAdminChat: () => request("/chat/direct/admin"),
+  sendDirectAdminMessage: (text) => request("/chat/direct/admin", { method: "POST", body: JSON.stringify({ text }) }),
+  getAdminConversations: () => request("/chat/direct/conversations"),
+  getAdminUserChat: (userId) => request(`/chat/direct/user/${userId}`),
+  sendAdminUserMessage: (userId, text) => request(`/chat/direct/user/${userId}`, { method: "POST", body: JSON.stringify({ text }) }),
 };

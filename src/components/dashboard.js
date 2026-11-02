@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, CalendarDays, ChevronDown, CircleHelp, ClipboardList, FileBadge, LayoutDashboard, LogOut, Menu, X, HeartHandshake, Plus, QrCode, Check, CheckCheck, ShieldCheck } from "lucide-react";
+import { Bell, CalendarDays, ChevronDown, CircleHelp, ClipboardList, FileBadge, LayoutDashboard, LogOut, Menu, X, HeartHandshake, Plus, QrCode, Check, CheckCheck, ShieldCheck, MessageSquare } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "./auth-provider";
 import { api } from "@/lib/api";
 
 const userLinks = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Event & Admin Chat", href: "/dashboard/chat", icon: MessageSquare },
   { label: "My events", href: "/dashboard/events", icon: ClipboardList },
   { label: "Joined events", href: "/dashboard/joined", icon: CalendarDays },
   { label: "QR Attendance", href: "/dashboard/attendance", icon: QrCode },
