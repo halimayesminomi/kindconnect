@@ -45,6 +45,9 @@ export function Navbar() {
           <div className="mobile-actions">
             {user ? (
               <>
+                {user.role === "admin" && (
+                  <Link className="btn btn-outline" href="/admin" onClick={() => setOpen(false)}>🛡️ Admin Panel</Link>
+                )}
                 <Link className="btn btn-ghost" href="/dashboard" onClick={() => setOpen(false)}>{t("dashboard")}</Link>
                 <button className="btn btn-primary" onClick={() => { setOpen(false); handleLogout(); }}>{t("logout")}</button>
               </>
@@ -74,6 +77,11 @@ export function Navbar() {
 
           {user ? (
             <>
+              {user.role === "admin" && (
+                <Link className="btn btn-primary desktop-only" href="/admin" style={{ padding: "6px 12px", fontSize: ".76rem", background: "#ff6b6b", borderColor: "#ff6b6b", color: "#fff" }}>
+                  🛡️ Admin Panel
+                </Link>
+              )}
               <Link className="btn btn-ghost desktop-only" href="/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: "8px" }} title={user.name}>
                 {user.photoURL ? (
                   <img src={user.photoURL} alt={user.name} title={user.name} style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }} />
@@ -81,11 +89,15 @@ export function Navbar() {
                   <span className="avatar" title={user.name} style={{ width: 26, height: 26, fontSize: ".6rem" }}>{initials}</span>
                 )}
                 <span title={user.name} style={{ fontWeight: 600 }}>{user.name}</span>
-                {(user.role === "organizer" || user.role === "admin") && (
+                {user.role === "admin" ? (
+                  <span style={{ background: "#ff6b6b", color: "#fff", fontSize: "0.62rem", fontWeight: 800, padding: "2px 8px", borderRadius: "10px", letterSpacing: "0.4px" }}>
+                    ADMIN & BUILDER
+                  </span>
+                ) : user.role === "organizer" ? (
                   <span style={{ background: "var(--green)", color: "#062817", fontSize: "0.62rem", fontWeight: 800, padding: "2px 8px", borderRadius: "10px", letterSpacing: "0.4px" }}>
                     ORGANIZER & BUILDER
                   </span>
-                )}
+                ) : null}
               </Link>
               <button className="btn btn-outline desktop-only" onClick={handleLogout} style={{ gap: "6px" }}>
                 <LogOut size={15}/>{t("logout")}

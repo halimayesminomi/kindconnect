@@ -11,6 +11,7 @@ import registrationRoutes from "./routes/registrations.js";
 import attendanceRoutes from "./routes/attendance.js";
 import notificationRoutes from "./routes/notifications.js";
 import emergencyRoutes from "./routes/emergency.js";
+import adminRoutes from "./routes/admin.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,6 +54,7 @@ app.use("/api/registrations", registrationRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/emergency", emergencyRoutes);
+app.use("/api/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 

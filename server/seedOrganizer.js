@@ -23,8 +23,8 @@ async function seedOrganizer() {
       username: "omi",
       email: "omi@kindconnect.org",
       password: hashedPassword,
-      role: "organizer",
-      designation: "Lead Organizer & Platform Builder",
+      role: "admin",
+      designation: "Platform Admin & Lead Builder",
       photoURL: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
     };
 

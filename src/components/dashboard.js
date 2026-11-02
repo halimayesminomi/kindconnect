@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, CalendarDays, ChevronDown, CircleHelp, ClipboardList, FileBadge, LayoutDashboard, LogOut, Menu, X, HeartHandshake, Plus, QrCode, Check, CheckCheck } from "lucide-react";
+import { Bell, CalendarDays, ChevronDown, CircleHelp, ClipboardList, FileBadge, LayoutDashboard, LogOut, Menu, X, HeartHandshake, Plus, QrCode, Check, CheckCheck, ShieldCheck } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "./auth-provider";
 import { api } from "@/lib/api";
@@ -27,8 +27,18 @@ export function DashboardShell({ children, user }) {
 
   const displayName = user?.name || "User";
   const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
-  const isOrganizer = user?.role === "organizer" || user?.role === "admin";
-  const role = isOrganizer ? (user?.designation || "Lead Organizer & Platform Builder") : "Volunteer";
+  const isAdmin = user?.role === "admin";
+  const isOrganizer = user?.role === "organizer" || isAdmin;
+  const role = isAdmin 
+    ? (user?.designation || "Platform Admin & Lead Builder")
+    : isOrganizer 
+      ? (user?.designation || "Lead Organizer & Platform Builder") 
+      : "Volunteer";
+
+  const navigationLinks = [
+    ...(isAdmin ? [{ label: "Admin Panel", href: "/admin", icon: ShieldCheck }] : []),
+    ...userLinks,
+  ];
 
   const fetchNotifs = () => {
     api.getNotifications()
@@ -84,7 +94,7 @@ export function DashboardShell({ children, user }) {
       </div>
       <div className="workspace-label">WORKSPACE</div>
       <div className="side-links">
-        {userLinks.map(({ label, href, icon: Icon }) => (
+        {navigationLinks.map(({ label, href, icon: Icon }) => (
           <Link key={href} href={href} onClick={() => setOpen(false)} className={`side-link ${pathname === href ? "selected" : ""}`}><Icon size={18}/>{label}</Link>
         ))}
       </div>
@@ -175,13 +185,17 @@ export function DashboardShell({ children, user }) {
             <span>
               <b style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 {displayName}
-                {isOrganizer && (
+                {isAdmin ? (
+                  <span style={{ background: "#ff6b6b", color: "#fff", fontSize: "0.58rem", fontWeight: 800, padding: "1px 6px", borderRadius: 6, letterSpacing: "0.5px" }}>
+                    ADMIN
+                  </span>
+                ) : isOrganizer ? (
                   <span style={{ background: "var(--green)", color: "#062817", fontSize: "0.58rem", fontWeight: 800, padding: "1px 6px", borderRadius: 6, letterSpacing: "0.5px" }}>
                     BUILDER
                   </span>
-                )}
+                ) : null}
               </b>
-              <small style={{ color: isOrganizer ? "var(--green)" : "inherit", fontWeight: isOrganizer ? 700 : 400 }}>{role}</small>
+              <small style={{ color: isAdmin ? "#ff6b6b" : isOrganizer ? "var(--green)" : "inherit", fontWeight: isOrganizer ? 700 : 400 }}>{role}</small>
             </span>
             <ChevronDown size={15}/>
           </div>

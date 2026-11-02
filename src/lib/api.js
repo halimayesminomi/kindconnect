@@ -56,4 +56,16 @@ export const api = {
   createEmergencyRequest: (body) => request("/emergency", { method: "POST", body: JSON.stringify(body) }),
   respondEmergencyRequest: (id) => request(`/emergency/${id}/respond`, { method: "POST" }),
   verifyEmergencyRequest: (id, body) => request(`/emergency/${id}/verify`, { method: "PATCH", body: JSON.stringify(body) }),
+
+  // Admin Control Panel
+  getAdminStats: () => request("/admin/stats"),
+  getAdminUsers: (params = "") => request(`/admin/users${params ? `?${params}` : ""}`),
+  updateUserRole: (id, body) => request(`/admin/users/${id}/role`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteUser: (id) => request(`/admin/users/${id}`, { method: "DELETE" }),
+  getAdminEvents: () => request("/admin/events"),
+  deleteAdminEvent: (id) => request(`/admin/events/${id}`, { method: "DELETE" }),
+  getAdminEmergency: () => request("/admin/emergency"),
+  verifyAdminEmergency: (id, body) => request(`/admin/emergency/${id}/verify`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteAdminEmergency: (id) => request(`/admin/emergency/${id}`, { method: "DELETE" }),
+  getAdminRegistrations: () => request("/admin/registrations"),
 };

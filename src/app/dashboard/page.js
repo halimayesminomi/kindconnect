@@ -21,11 +21,42 @@ export default function Dashboard() {
   const now = new Date();
   const greeting = now.getHours() < 12 ? "Good morning" : now.getHours() < 17 ? "Good afternoon" : "Good evening";
   const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).toUpperCase();
-  const isOrganizer = user?.role === "organizer" || user?.role === "admin";
+  const isAdmin = user?.role === "admin";
+  const isOrganizer = user?.role === "organizer" || isAdmin;
   const displayName = isOrganizer ? (user?.name || "Halima Yesmin Omi") : (user?.name?.split(" ")[0] || "there");
 
   return <>
-    {isOrganizer && (
+    {isAdmin ? (
+      <div style={{
+        marginBottom: 20,
+        background: "linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(183, 243, 107, 0.06) 100%)",
+        border: "1px solid rgba(239, 68, 68, 0.5)",
+        borderRadius: 14,
+        padding: "14px 20px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: 12
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ background: "#ff6b6b", color: "#fff", fontWeight: 800, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 8, letterSpacing: "0.5px" }}>
+            ADMIN PORTAL
+          </span>
+          <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+            Logged in as <b>{user?.name || "Halima Yesmin Omi"}</b> — Platform Administrator & Lead Builder
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <Link href="/admin" className="btn btn-primary" style={{ padding: "6px 14px", fontSize: "0.78rem", background: "#ff6b6b", borderColor: "#ff6b6b", color: "#fff" }}>
+            🛡️ Admin Control Panel
+          </Link>
+          <Link href="/dashboard/create-event" className="btn btn-outline" style={{ padding: "6px 14px", fontSize: "0.78rem" }}>
+            <Plus size={15}/> Host Event
+          </Link>
+        </div>
+      </div>
+    ) : isOrganizer ? (
       <div style={{
         marginBottom: 20,
         background: "linear-gradient(135deg, rgba(21, 128, 61, 0.15) 0%, rgba(183, 243, 107, 0.08) 100%)",
@@ -55,7 +86,7 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
-    )}
+    ) : null}
 
     <div className="dash-heading">
       <div>
