@@ -135,7 +135,7 @@ export default function Home() {
         <SectionHeading 
           eyebrow="FIND YOUR PURPOSE" 
           title="Upcoming Community Opportunities" 
-          description="Explore dynamic volunteer initiatives across Dhaka and find the cause that speaks to you." 
+          description="Explore dynamic volunteer initiatives across Sylhet, Dhaka and all of Bangladesh to find the cause that speaks to you." 
           action={<Link className="text-link" href="/events">View all events <ArrowRight size={16}/></Link>}
         />
         <div className="event-grid">

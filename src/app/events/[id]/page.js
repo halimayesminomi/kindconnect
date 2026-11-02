@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, CalendarDays, Clock3, MapPin, Users, CheckCircle2, MessageSquare, Send, Lock } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CalendarDays, Clock3, MapPin, Users, CheckCircle2, MessageSquare, Send, Lock, ExternalLink } from "lucide-react";
 import { PublicLayout } from "@/components/site";
 import { useAuth } from "@/components/auth-provider";
 import { api } from "@/lib/api";
@@ -275,7 +275,21 @@ export default function EventDetails() {
         <h2>Be part of it.</h2>
         <div className="detail-fact"><CalendarDays/><span><small>Date</small><b>{dateStr}</b></span></div>
         <div className="detail-fact"><Clock3/><span><small>Time</small><b>{event.time}</b></span></div>
-        <div className="detail-fact"><MapPin/><span><small>Location</small><b>{event.location}</b></span></div>
+        <div className="detail-fact">
+          <MapPin/>
+          <span>
+            <small>Location</small>
+            <b>{event.location}</b>
+            <a 
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location + ", Bangladesh")}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: ".68rem", color: "var(--green)", marginTop: 2 }}
+            >
+              View on Map <ExternalLink size={10} />
+            </a>
+          </span>
+        </div>
         <div className="detail-fact"><Users/><span><small>Volunteers</small><b>{event.volunteersCount} of {event.capacity} spots filled</b></span></div>
         <div className="progress"><span style={{ width: `${percent}%` }}/></div>
         {isPast ? (

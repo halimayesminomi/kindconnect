@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f8fafc;
+    color: #0f172a;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  .canvas {
+    width: 1000px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 36px 42px;
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
+  }
+  
+  /* Header */
+  .diagram-header {
+    text-align: center;
+    margin-bottom: 26px;
+    padding-bottom: 18px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .dept-badge {
+    display: inline-block;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .sub-title {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  /* Tier Containers */
+  .tier-card {
+    border-radius: 14px;
+    padding: 20px 24px;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+  }
+  .tier-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .tier-title {
+    font-size: 16px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tier-tag {
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 6px;
+  }
+
+  /* TIER 1: CLIENT */
+  .tier-client {
+    background: #f0f9ff;
+    border: 2px solid #0284c7;
+  }
+  .tier-client .tier-title { color: #0369a1; }
+  .tier-client .tier-tag { background: #bae6fd; color: #075985; }
+
+  .client-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .c-box {
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .c-box b {
+    display: block;
+    font-size: 12px;
+    color: #0f172a;
+    margin-bottom: 2px;
+  }
+  .c-box span {
+    font-size: 10px;
+    color: #475569;
+  }
+
+  /* CONNECTORS */
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+  }
+  .c-line {
+    width: 2px;
+    height: 14px;
+    background: #94a3b8;
+  }
+  .c-pill {
+    background: #ffffff;
+    border: 1.5px solid #64748b;
+    border-radius: 20px;
+    padding: 4px 18px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1e293b;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 2;
+  }
+  .c-arrow {
+    width: 0; 
+    height: 0; 
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #475569;
+  }
+
+  /* TIER 2: SERVER */
+  .tier-server {
+    background: #f0fdf4;
+    border: 2px solid #16a34a;
+  }
+  .tier-server .tier-title { color: #15803d; }
+  .tier-server .tier-tag { background: #bbf7d0; color: #14532d; }
+
+  .server-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .s-layer {
+    background: #ffffff;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .s-tag {
+    font-size: 10.5px;
+    font-weight: 800;
+    background: #dcfce7;
+    color: #166534;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    min-width: 140px;
+    text-align: center;
+  }
+  .s-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip-item {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  /* TIER 3: DATABASE */
+  .tier-db {
+    background: #faf5ff;
+    border: 2px solid #9333ea;
+  }
+  .tier-db .tier-title { color: #7e22ce; }
+  .tier-db .tier-tag { background: #e9d5ff; color: #581c87; }
+
+  .db-collections {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .col-card {
+    background: #ffffff;
+    border: 1px solid #d8b4fe;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .col-icon {
+    font-size: 18px;
+  }
+  .col-text b {
+    display: block;
+    font-size: 12px;
+    color: #3b0764;
+  }
+  .col-text span {
+    font-size: 10px;
+    color: #6b21a8;
+  }
+
+  /* Footer */
+  .diagram-footer {
+    margin-top: 24px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #64748b;
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas">
+  <div class="diagram-header">
+    <div class="dept-badge">METROPOLITAN UNIVERSITY • CSE 36 (EVE) • CSE 323</div>
+    <h1>KindConnect System Architecture</h1>
+    <div class="sub-title">Full-Stack 3-Tier Architecture: Presentation, Application Logic & Cloud Persistence</div>
+  </div>
+
+  <!-- TIER 1 -->
+  <div class="tier-card tier-client">
+    <div class="tier-head">
+      <div class="tier-title">
+        <span>🌐</span> [ Web Browser / Client Tier ]
+      </div>
+      <span class="tier-tag">Presentation Layer</span>
+    </div>
+    <div class="client-grid">
+      <div class="c-box">
+        <b>Next.js 15 (App Router)</b>
+        <span>Fast SSR & Page Routing</span>
+      </div>
+      <div class="c-box">
+        <b>React 19 Components</b>
+        <span>Dynamic State & Client UI</span>
+      </div>
+      <div class="c-box">
+        <b>Tailwind CSS v4</b>
+        <span>Modern Dark Theme & Layout</span>
+      </div>
+      <div class="c-box">
+        <b>Client Capabilities</b>
+        <span>QR Scanner, Chat Stream, Print</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONNECTOR 1 -->
+  <div class="connector">
+    <div class="c-line"></div>
+    <div class="c-pill">
+      <span>🔒</span> HTTP REST API Requests (Bearer JWT Authorization Header)
+    </div>
+    <div class="c-line"></div>
+    <div class="c-arrow"></div>
+  </div>
+
+  <!-- TIER 2 -->
+  <div class="tier-card tier-server">
+    <div class="tier-head">
+      <div class="tier-title">
+        <span>⚙️</span> [ Node.js + Express.js 5 API Server Tier ]
+      </div>
+      <span class="tier-tag">Application Logic</span>
+    </div>
+    <div class="server-stack">
+      <div class="s-layer">
+        <div class="s-tag">├── Verification Middleware</div>
+        <div class="s-content">
+          <span class="chip-item">JWT Authentication Middleware</span>
+          <span class="chip-item">Role-Based Access Control (RBAC)</span>
+          <span class="chip-item">Bcrypt Password Hashing</span>
+        </div>
+      </div>
+      <div class="s-layer">
+        <div class="s-tag">├── Business Controllers</div>
+        <div class="s-content">
+          <span class="chip-item">Events Controller</span>
+          <span class="chip-item">Volunteer Registrations</span>
+          <span class="chip-item">QR Code Attendance & Points</span>
+          <span class="chip-item">1000-Point Certificate Engine</span>
+          <span class="chip-item">Live Chat (Event Group & 1v1 Admin)</span>
+          <span class="chip-item">Emergency Relief Hub</span>
+          <span class="chip-item">Admin Governance</span>
+        </div>
+      </div>
+      <div class="s-layer">
+        <div class="s-tag">└── Schema Validation</div>
+        <div class="s-content">
+          <span class="chip-item">Mongoose Data Models</span>
+          <span class="chip-item">Input Sanitization</span>
+          <span class="chip-item">Reference Populations & Indexes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONNECTOR 2 -->
+  <div class="connector">
+    <div class="c-line"></div>
+    <div class="c-pill">
+      <span>🍃</span> Mongoose ODM Database Queries (Encrypted TLS/SSL Connection)
+    </div>
+    <div class="c-line"></div>
+    <div class="c-arrow"></div>
+  </div>
+
+  <!-- TIER 3 -->
+  <div class="tier-card tier-db">
+    <div class="tier-head">
+      <div class="tier-title">
+        <span>🗄️</span> [ MongoDB Atlas Cloud Database Tier ]
+      </div>
+      <span class="tier-tag">Cloud Storage & Persistence</span>
+    </div>
+    <div class="db-collections">
+      <div class="col-card">
+        <div class="col-icon">👤</div>
+        <div class="col-text">
+          <b>Users Collection</b>
+          <span>Credentials, Roles & Profiles</span>
+        </div>
+      </div>
+      <div class="col-card">
+        <div class="col-icon">📅</div>
+        <div class="col-text">
+          <b>Events Collection</b>
+          <span>Schedules, Venue & Capacities</span>
+        </div>
+      </div>
+      <div class="col-card">
+        <div class="col-icon">📝</div>
+        <div class="col-text">
+          <b>Registrations Collection</b>
+          <span>Volunteer Bookings & Status</span>
+        </div>
+      </div>
+      <div class="col-card">
+        <div class="col-icon">🎯</div>
+        <div class="col-text">
+          <b>Attendances Collection</b>
+          <span>QR Check-ins & Impact Points</span>
+        </div>
+      </div>
+      <div class="col-card">
+        <div class="col-icon">💬</div>
+        <div class="col-text">
+          <b>Messages Collection</b>
+          <span>Event Group & Admin Chat History</span>
+        </div>
+      </div>
+      <div class="col-card">
+        <div class="col-icon">🚨</div>
+        <div class="col-text">
+          <b>EmergencyRequests Collection</b>
+          <span>Relief Needs, Blood & Approvals</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-footer">
+    <div>Project: <b>KindConnect</b> • Metropolitan University, Sylhet</div>
+    <div>Team: <b>Halima Yesmin Omi</b> (251-112-001) & <b>Shraboni Das</b> (251-112-006)</div>
+    <div>Instructor: <b>Mr. Abu Jafar Md. Jakaria</b> (CSE 323)</div>
+  </div>
+</div>
+
+</body>
+</html>
