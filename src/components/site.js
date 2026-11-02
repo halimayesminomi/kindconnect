@@ -128,8 +128,8 @@ export function Footer() {
             <span>kind<span className="brand-accent">connect</span><small>CONNECT PEOPLE. CREATE IMPACT.</small></span>
           </Link>
           <p className="muted footer-copy">Small actions. Stronger communities. A better tomorrow.</p>
-          <p className="muted" style={{ fontSize: ".72rem", marginTop: 8 }}>
-            Course: <b>CSE 35+36 Web Programming Lab</b><br />
+          <p className="muted" style={{ fontSize: ".72rem", marginTop: 8, lineHeight: 1.6 }}>
+            <b>CSE 36 (EVE) Metropolitan University</b><br />
             Team: <b>Halima Yesmin Omi</b> (251-112-001) & <b>Shraboni Das</b> (251-112-006)<br />
             Instructor: <b>Mr. Abu Jafar Md. Jakaria</b>
           </p>
@@ -153,7 +153,7 @@ export function Footer() {
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>© 2026 KindConnect. Built for social development in Bangladesh.</span>
+        <span>© 2026 KindConnect. Creator : Halima Yesmin Omi</span>
         <span>Made with purpose <span className="brand-accent">♥</span></span>
       </div>
     </footer>

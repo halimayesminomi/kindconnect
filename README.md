@@ -10,11 +10,11 @@ KindConnect is a full-stack, community-driven web platform designed to connect p
 
 ---
 
-## 🎓 Academic Project Assessment Details
+## 🎓 Project & Institution Details
 
-- **Course**: Web Programming Lab (CSE 35+36)
+- **Institution & Department**: CSE 36 (EVE) Metropolitan University
 - **Course Instructor**: Mr. Abu Jafar Md. Jakaria
-- **Submission Date**: 06 November 2026
+- **Creator**: Halima Yesmin Omi
 - **Team Members**:
   1. **Halima Yesmin Omi** — ID: `251-112-001`
   2. **Shraboni Das** — ID: `251-112-006`
@@ -225,5 +225,5 @@ A complete Postman Collection file is available in the root directory: [`kindcon
 
 ---
 
-## 📄 License
-This project is prepared and submitted for the **Web Programming Lab (CSE 35+36)** assessment. All rights reserved © 2026 KindConnect.
+## 📄 Copyright & Creator
+All rights reserved © 2026 KindConnect. Creator : Halima Yesmin Omi.

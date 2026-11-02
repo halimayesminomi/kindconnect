@@ -51,34 +51,34 @@ export default function About() {
     <section style={{ margin: "80px 0 20px", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 20, padding: "40px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
         <GraduationCap size={20} color="var(--green)" />
-        <span className="eyebrow" style={{ margin: 0 }}>ACADEMIC PROJECT ASSESSMENT</span>
+        <span className="eyebrow" style={{ margin: 0 }}>ACADEMIC PROJECT</span>
       </div>
-      <h2 style={{ fontSize: "1.9rem", margin: "8px 0 16px" }}>Web Programming Lab · CSE 35+36</h2>
+      <h2 style={{ fontSize: "1.9rem", margin: "8px 0 16px" }}>CSE 36 (EVE) Metropolitan University</h2>
       <p className="muted" style={{ maxWidth: 650, lineHeight: 1.8, fontSize: ".9rem" }}>
-        KindConnect was conceptualized and developed as a comprehensive full-stack social development and volunteer management platform for the Web Programming Lab course assessment.
+        KindConnect was conceptualized and developed as a comprehensive full-stack social development and volunteer management platform.
       </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, marginTop: 28 }}>
         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--line)", borderRadius: 12, padding: "20px" }}>
           <small className="muted" style={{ display: "block", fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1px" }}>Team Members</small>
-          <b style={{ fontSize: ".9rem", display: "block", marginTop: 6 }}>1. Halima Yesmin Omi</b>
+          <b style={{ fontSize: ".9rem", display: "block", marginTop: 6 }}>Halima Yesmin Omi</b>
           <span className="muted" style={{ fontSize: ".76rem" }}>ID: 251-112-001</span>
-          <b style={{ fontSize: ".9rem", display: "block", marginTop: 10 }}>2. Shraboni Das</b>
+          <b style={{ fontSize: ".9rem", display: "block", marginTop: 10 }}>Shraboni Das</b>
           <span className="muted" style={{ fontSize: ".76rem" }}>ID: 251-112-006</span>
         </div>
 
         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--line)", borderRadius: 12, padding: "20px" }}>
-          <small className="muted" style={{ display: "block", fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1px" }}>Course & Instructor</small>
-          <b style={{ fontSize: ".9rem", display: "block", marginTop: 6 }}>Web Programming Lab</b>
-          <span className="muted" style={{ fontSize: ".76rem" }}>Section: CSE 35+36</span>
+          <small className="muted" style={{ display: "block", fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1px" }}>Institution & Instructor</small>
+          <b style={{ fontSize: ".9rem", display: "block", marginTop: 6 }}>Metropolitan University</b>
+          <span className="muted" style={{ fontSize: ".76rem" }}>CSE 36 (EVE)</span>
           <b style={{ fontSize: ".9rem", display: "block", marginTop: 10 }}>Mr. Abu Jafar Md. Jakaria</b>
           <span className="muted" style={{ fontSize: ".76rem" }}>Course Instructor</span>
         </div>
 
         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--line)", borderRadius: 12, padding: "20px" }}>
-          <small className="muted" style={{ display: "block", fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1px" }}>Project Timeline</small>
-          <b style={{ fontSize: ".9rem", display: "block", marginTop: 6 }}>Submission Date</b>
-          <span className="muted" style={{ fontSize: ".76rem" }}>06 November 2026</span>
+          <small className="muted" style={{ display: "block", fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1px" }}>Project Details</small>
+          <b style={{ fontSize: ".9rem", display: "block", marginTop: 6 }}>Creator</b>
+          <span className="muted" style={{ fontSize: ".76rem" }}>Halima Yesmin Omi</span>
           <b style={{ fontSize: ".9rem", display: "block", marginTop: 10 }}>Technology Stack</b>
           <span className="muted" style={{ fontSize: ".76rem" }}>Next.js 15, Express.js, MongoDB Atlas</span>
         </div>
