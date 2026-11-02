@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { HeartHandshake, ArrowUpRight, User, Mail, LockKeyhole, ImageIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import toast from "react-hot-toast";
 
@@ -12,7 +12,13 @@ export default function Register() {
   const { register, loginWithGoogle, user } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  if (user) { router.push("/dashboard"); return null; }
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard");
+    }
+  }, [user, router]);
+
+  if (user) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
