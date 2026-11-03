@@ -565,8 +565,8 @@ export async function POST(request, { params }) {
 
       const cleanEmail = email.trim().toLowerCase();
 
-      // Strict validation for real email address (rejects fake / dummy / disposable emails)
-      const emailValidation = validateRealEmail(cleanEmail);
+      // Strict validation for genuine Gmail address (rejects non-gmail, fake, dummy, disposable emails)
+      const emailValidation = validateRealEmail(cleanEmail, { requireGmail: true });
       if (!emailValidation.isValid) {
         return NextResponse.json({
           message: emailValidation.errorBn || emailValidation.error,
@@ -672,6 +672,14 @@ export async function POST(request, { params }) {
       }
 
       const cleanEmail = userInfo.email.trim().toLowerCase();
+      const emailValidation = validateRealEmail(cleanEmail, { requireGmail: true });
+      if (!emailValidation.isValid) {
+        return NextResponse.json({
+          message: emailValidation.errorBn || emailValidation.error,
+          errorEn: emailValidation.error
+        }, { status: 400 });
+      }
+
       let user = await User.findOne({ email: cleanEmail });
 
       if (!user) {

@@ -38,9 +38,12 @@ const SPAM_TLDS = new Set(["tk", "ml", "ga", "cf", "gq", "top", "click", "buzz",
 
 /**
  * Validates whether an email address is real, strictly formatted, and not fake/disposable.
+ * When options.requireGmail is true, enforces that the email MUST be a genuine Google Gmail account.
  * Returns { isValid: boolean, error?: string, errorBn?: string }
  */
-export function validateRealEmail(email) {
+export function validateRealEmail(email, options = {}) {
+  const { requireGmail = false } = options;
+
   if (!email || typeof email !== "string") {
     return {
       isValid: false,
@@ -51,7 +54,7 @@ export function validateRealEmail(email) {
 
   const clean = email.trim().toLowerCase();
 
-  // Basic structure: local@domain.tld
+  // Basic RFC structure: local@domain.tld
   const generalRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
   if (!generalRegex.test(clean)) {
     return {
@@ -72,14 +75,25 @@ export function validateRealEmail(email) {
     };
   }
 
+  // If requireGmail is true: domain MUST strictly be gmail.com or googlemail.com
+  if (requireGmail) {
+    if (domain !== "gmail.com" && domain !== "googlemail.com") {
+      return {
+        isValid: false,
+        error: "KindConnect registration strictly requires a genuine Gmail address (@gmail.com). Temporary or other domains are not allowed.",
+        errorBn: "অ্যাকাউন্ট তৈরি করতে শুধুমাত্র আসল ও অনুমোদিত Gmail (@gmail.com) ঠিকানা ব্যবহার করতে হবে। কোনো ভুয়া বা অস্থায়ী ইমেইল গ্রহণযোগ্য নয়।"
+      };
+    }
+  }
+
   // TLD check
   const domainParts = domain.split(".");
   const tld = domainParts[domainParts.length - 1];
   if (!tld || tld.length < 2 || SPAM_TLDS.has(tld)) {
     return {
       isValid: false,
-      error: "This email domain extension is not allowed. Please use a standard email (e.g. @gmail.com, @yahoo.com).",
-      errorBn: "এই ডোমেইন এক্সটেনশনটি গ্রহণযোগ্য নয়। দয়া করে আসল জিমেইল বা ইয়াহু ইমেইল দিন।"
+      error: "This email domain extension is not allowed. Please use a standard email (e.g. @gmail.com).",
+      errorBn: "এই ডোমেইন এক্সটেনশনটি গ্রহণযোগ্য নয়। দয়া করে আসল জিমেইল (@gmail.com) দিন।"
     };
   }
 
@@ -120,7 +134,7 @@ export function validateRealEmail(email) {
     };
   }
 
-  // Keyboard mash check: If username is purely alphabetic, 6+ characters long, and has ZERO vowels (a, e, i, o, u)
+  // Keyboard mash check: If username is purely alphabetic, 6+ characters long, and has ZERO vowels (a, e, i, o, u, y)
   if (/^[a-z]{6,}$/.test(localPart) && !/[aeiouy]/.test(localPart)) {
     return {
       isValid: false,
@@ -129,16 +143,21 @@ export function validateRealEmail(email) {
     };
   }
 
-  // Alternating keyboard mash patterns like "asdfasdf" or "qweqwe"
-  if (/^(asdf|qwerty|zxcv|1234){2,}$/.test(localPart)) {
-    return {
-      isValid: false,
-      error: "Key-pattern dummy email addresses are blocked.",
-      errorBn: "কিবোর্ড প্যাটার্নের ভুয়া ইমেইল গ্রহণযোগ্য নয়।"
-    };
+  // Alternating keyboard mash patterns or keyboard walks like "asdfghjk", "qwerty", "asdfasdf"
+  const keyboardWalks = ["asdf", "ghjk", "qwerty", "zxcv", "1234", "abcd", "qwer"];
+  if (keyboardWalks.some(walk => localPart.includes(walk))) {
+    if (/^(asdf|qwerty|zxcv|1234|ghjk|qwer|abcd)[0-9a-z]{0,10}$/.test(localPart.replace(/\./g, ""))) {
+      return {
+        isValid: false,
+        error: "Key-pattern dummy email addresses are blocked.",
+        errorBn: "কিবোর্ড প্যাটার্নের ভুয়া ইমেইল গ্রহণযোগ্য নয়।"
+      };
+    }
   }
 
-  // Strict Gmail rules (applies if domain is gmail.com or googlemail.com)
+  // =========================================================================
+  // Strict Genuine Google Gmail Rules (applies to gmail.com / googlemail.com)
+  // =========================================================================
   if (domain === "gmail.com" || domain === "googlemail.com") {
     const localWithoutDots = localPart.replace(/\./g, "");
 
@@ -175,7 +194,7 @@ export function validateRealEmail(email) {
       };
     }
 
-    // Must only contain a-z, 0-9, and .
+    // Google only allows letters (a-z), numbers (0-9), and periods (.)
     if (!/^[a-z0-9.]+$/.test(localPart)) {
       return {
         isValid: false,
@@ -184,7 +203,25 @@ export function validateRealEmail(email) {
       };
     }
 
-    // Block common dummy patterns on gmail
+    // Google does not allow purely numeric usernames (e.g., 123456@gmail.com)
+    if (/^[0-9.]+$/.test(localPart)) {
+      return {
+        isValid: false,
+        error: "Google Gmail usernames cannot consist purely of numbers. At least one letter is required.",
+        errorBn: "গুগল জিমেইলে শুধুমাত্র সংখ্যা দিয়ে ইউজারনেম তৈরি করা যায় না। অন্তত একটি ইংরেজি অক্ষর থাকতে হবে।"
+      };
+    }
+
+    // Block common dummy prefixes & patterns on gmail
+    const blockedPrefixes = ["test", "fake", "dummy", "sample", "temp", "asdf", "qwerty", "unknown", "random", "fakeuser", "testuser", "dummyuser"];
+    if (blockedPrefixes.some(prefix => localWithoutDots.startsWith(prefix))) {
+      return {
+        isValid: false,
+        error: "Placeholder Gmail addresses with 'test', 'fake', or 'dummy' prefixes are not allowed.",
+        errorBn: "টেস্ট, ফেক বা ডামি ইউজারনেমের জিমেইল গ্রহণযোগ্য নয়। অনুগ্রহ করে আপনার আসল জিমেইল দিন।"
+      };
+    }
+
     const blockedGmailPatterns = [
       /^test[0-9]*$/,
       /^fake[0-9]*$/,
@@ -192,7 +229,11 @@ export function validateRealEmail(email) {
       /^user[0-9]*$/,
       /^asdf[0-9]*$/,
       /^abc[0-9]*$/,
-      /^1234[0-9]*$/
+      /^1234[0-9]*$/,
+      /^sample[0-9]*$/,
+      /^email[0-9]*$/,
+      /^mail[0-9]*$/,
+      /^admin[0-9]*$/
     ];
     for (const pat of blockedGmailPatterns) {
       if (pat.test(localWithoutDots)) {

@@ -53,47 +53,16 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const loginAsDemo = (role = "admin") => {
-    const demoUser = role === "admin" ? {
-      _id: "demo-omi-admin",
-      name: "Halima Yesmin Omi",
-      username: "omi",
-      email: "omi@kindconnect.org",
-      role: "admin",
-      designation: "Platform Admin & Lead Builder",
-      points: 1250,
-      hoursVolunteered: 38,
-      photoURL: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80"
-    } : {
-      _id: "demo-volunteer-01",
-      name: "Shraboni Das",
-      username: "shraboni",
-      email: "shraboni@kindconnect.org",
-      role: "volunteer",
-      designation: "Active Community Volunteer",
-      points: 620,
-      hoursVolunteered: 24,
-      photoURL: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80"
-    };
-
-    localStorage.setItem("kindconnect_demo_user", JSON.stringify(demoUser));
-    localStorage.setItem("kindconnect_token", "local-token-" + Date.now());
-    setUser(demoUser);
-    return demoUser;
+  const loginAsDemo = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("kindconnect_demo_user");
+      localStorage.removeItem("kindconnect_token");
+    }
+    throw new Error("ডেমো লগইন সম্পূর্ণরূপে বন্ধ করা হয়েছে। শুধুমাত্র আপনার আসল জিমেইল (@gmail.com) দিয়ে সাইন আপ বা সাইন ইন করুন।");
   };
 
-  const socialLogin = async (provider = "google") => {
-    try {
-      const defaultData = provider === "google" 
-        ? { provider: "google", email: "google.volunteer@kindconnect.org", name: "Google Volunteer", photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" }
-        : { provider: "github", email: "github.volunteer@kindconnect.org", name: "GitHub Volunteer", photoURL: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80" };
-      const data = await api.socialLogin(defaultData);
-      localStorage.setItem("kindconnect_token", data.token);
-      setUser(data.user);
-      return data;
-    } catch (_) {
-      return loginAsDemo("volunteer");
-    }
+  const socialLogin = async () => {
+    throw new Error("অনুগ্রহ করে অফিসিয়াল গুগল সাইন-ইন বা আসল জিমেইল ব্যবহার করুন।");
   };
 
   const loginWithGoogle = async (credential, userInfo) => {
