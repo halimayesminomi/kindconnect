@@ -7,6 +7,7 @@ import Attendance from "@/models/Attendance";
 import EmergencyRequest from "@/models/EmergencyRequest";
 import Message from "@/models/Message";
 import { FALLBACK_EVENTS } from "@/lib/fallbackData";
+import { validateRealEmail } from "@/lib/email-validator";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -548,6 +549,16 @@ export async function POST(request, { params }) {
       }
 
       const cleanEmail = email.trim().toLowerCase();
+
+      // Strict validation for real email address (rejects fake / dummy / disposable emails)
+      const emailValidation = validateRealEmail(cleanEmail);
+      if (!emailValidation.isValid) {
+        return NextResponse.json({
+          message: emailValidation.errorBn || emailValidation.error,
+          errorEn: emailValidation.error
+        }, { status: 400 });
+      }
+
       const existingUser = await User.findOne({ email: cleanEmail });
       if (existingUser) {
         return NextResponse.json({ message: "An account with this email already exists" }, { status: 400 });
@@ -593,12 +604,27 @@ export async function POST(request, { params }) {
       }
 
       const cleanIdentifier = email.trim().toLowerCase();
+
+      // Strict validation if email is provided
+      if (cleanIdentifier.includes("@")) {
+        const emailValidation = validateRealEmail(cleanIdentifier);
+        if (!emailValidation.isValid) {
+          return NextResponse.json({
+            message: emailValidation.errorBn || emailValidation.error,
+            errorEn: emailValidation.error
+          }, { status: 400 });
+        }
+      }
+
       const user = await User.findOne({
         $or: [{ email: cleanIdentifier }, { username: cleanIdentifier }],
       });
 
       if (!user) {
-        return NextResponse.json({ message: "No account found with this email or username" }, { status: 404 });
+        return NextResponse.json({
+          message: "এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি। সঠিক নিবন্ধিত ইমেইল দিন।",
+          errorEn: "No account found with this email or username."
+        }, { status: 404 });
       }
 
       const isMatch = await bcrypt.compare(password, user.password);

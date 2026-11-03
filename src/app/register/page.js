@@ -6,6 +6,7 @@ import { HeartHandshake, ArrowUpRight, User, Mail, LockKeyhole, ImageIcon, Eye, 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useSite } from "@/components/site-provider";
+import { validateRealEmail } from "@/lib/email-validator";
 import toast from "react-hot-toast";
 
 export default function Register() {
@@ -33,9 +34,9 @@ export default function Register() {
 
     if (!name || !email || !password) { toast.error("Please fill in all required fields."); return; }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast.error(lang === "bn" ? "অনুগ্রহ করে একটি সঠিক ও কার্যকর ইমেইল দিন (যেমন: you@gmail.com)।" : "Please provide a valid email address (e.g. you@gmail.com).");
+    const emailValidation = validateRealEmail(email);
+    if (!emailValidation.isValid) {
+      toast.error(lang === "bn" ? (emailValidation.errorBn || emailValidation.error) : emailValidation.error);
       return;
     }
 

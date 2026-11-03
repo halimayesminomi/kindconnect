@@ -6,6 +6,7 @@ import { HeartHandshake, ArrowUpRight, Mail, LockKeyhole, Eye, EyeOff, ShieldChe
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useSite } from "@/components/site-provider";
+import { validateRealEmail } from "@/lib/email-validator";
 import toast from "react-hot-toast";
 
 export default function Login() {
@@ -30,6 +31,14 @@ export default function Login() {
     const password = form.password.value;
 
     if (!email || !password) { toast.error("Please fill in all fields."); return; }
+
+    if (email.includes("@")) {
+      const emailValidation = validateRealEmail(email);
+      if (!emailValidation.isValid) {
+        toast.error(lang === "bn" ? (emailValidation.errorBn || emailValidation.error) : emailValidation.error);
+        return;
+      }
+    }
 
     setLoading(true);
     try {
