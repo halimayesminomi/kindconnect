@@ -71,6 +71,7 @@ export const api = {
   verifyEmergencyRequest: (id, body) => request(`/emergency/${id}/verify`, { method: "PATCH", body: JSON.stringify(body) }),
 
   // Admin Control Panel
+  adminAuth: (body) => request("/admin/auth", { method: "POST", body: JSON.stringify(body) }),
   getAdminStats: () => request("/admin/stats"),
   getAdminUsers: (params = "") => request(`/admin/users${params ? `?${params}` : ""}`),
   updateUserRole: (id, body) => request(`/admin/users/${id}/role`, { method: "PATCH", body: JSON.stringify(body) }),

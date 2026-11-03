@@ -565,18 +565,18 @@ export async function POST(request, { params }) {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const isLead = cleanEmail.includes("halima") || cleanEmail.includes("omi");
 
+      // All regular registrations are strictly assigned the 'user' role
       const newUser = await User.create({
         name: name.trim(),
         username: cleanEmail.split("@")[0],
         email: cleanEmail,
         password: hashedPassword,
         photoURL: photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-        role: isLead ? "admin" : "user",
-        designation: isLead ? "Platform Admin & Lead Builder" : "Active Volunteer",
-        points: isLead ? 1250 : 100,
-        hoursVolunteered: isLead ? 38 : 2,
+        role: "user",
+        designation: "Active Volunteer",
+        points: 100,
+        hoursVolunteered: 2,
       });
 
       const token = jwt.sign(
@@ -659,8 +659,6 @@ export async function POST(request, { params }) {
       const cleanEmail = userInfo.email.trim().toLowerCase();
       let user = await User.findOne({ email: cleanEmail });
 
-      const isLead = cleanEmail.includes("halima") || cleanEmail.includes("omi");
-
       if (!user) {
         const dummyPassword = await bcrypt.hash(`google_${Date.now()}_kc`, 10);
         user = await User.create({
@@ -669,10 +667,10 @@ export async function POST(request, { params }) {
           email: cleanEmail,
           password: dummyPassword,
           photoURL: userInfo.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-          role: isLead ? "admin" : "user",
-          designation: isLead ? "Platform Admin & Lead Builder" : "Active Volunteer",
-          points: isLead ? 1250 : 150,
-          hoursVolunteered: isLead ? 38 : 4,
+          role: "user",
+          designation: "Active Volunteer",
+          points: 150,
+          hoursVolunteered: 4,
         });
       }
 
@@ -689,6 +687,59 @@ export async function POST(request, { params }) {
         success: true,
         token,
         user: userObj,
+      });
+    }
+
+    // 3.5. Admin: Direct Security Portal Authentication (name: omi, pass: Omi@2026)
+    if (path === "admin/auth") {
+      const { username, password } = body;
+      const cleanUsername = (username || "").trim().toLowerCase();
+
+      // Enforce strict credentials: name must be 'omi' and password 'Omi@2026'
+      if (cleanUsername !== "omi" || password !== "Omi@2026") {
+        return NextResponse.json({
+          message: "অ্যাক্সেস সংরক্ষিত। শুধুমাত্র অনুমোদিত অ্যাডমিন (omi) এবং সঠিক পাসওয়ার্ড দিয়ে প্রবেশ করা যাবে।",
+          errorEn: "Invalid admin credentials. Access denied."
+        }, { status: 403 });
+      }
+
+      let adminUser = await User.findOne({
+        $or: [{ username: "omi" }, { email: "omi@kindconnect.org" }]
+      });
+
+      if (!adminUser) {
+        const hash = await bcrypt.hash("Omi@2026", 10);
+        adminUser = await User.create({
+          name: "Halima Yesmin Omi",
+          username: "omi",
+          email: "omi@kindconnect.org",
+          password: hash,
+          role: "admin",
+          designation: "Platform Admin & Lead Builder",
+          photoURL: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+          points: 1250,
+          hoursVolunteered: 38
+        });
+      } else if (adminUser.role !== "admin") {
+        adminUser.role = "admin";
+        await adminUser.save();
+      }
+
+      const token = jwt.sign(
+        { id: adminUser._id, email: adminUser.email, role: "admin", name: adminUser.name },
+        JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+
+      const userObj = adminUser.toObject();
+      delete userObj.password;
+      userObj.role = "admin";
+
+      return NextResponse.json({
+        success: true,
+        message: "Welcome to KindConnect Admin Control Panel, Omi!",
+        token,
+        user: userObj
       });
     }
 

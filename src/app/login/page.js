@@ -194,39 +194,6 @@ export default function Login() {
           <button className="btn btn-primary btn-block" type="submit" disabled={loading}>{loading ? (lang === "bn" ? "সাইন ইন হচ্ছে..." : "Signing in...") : t("signInAction")} {!loading && <ArrowUpRight size={17}/>}</button>
           <p className="auth-switch">{t("newToKindConnect")} <Link href="/register">{t("signUpAction")}</Link></p>
         </form>
-
-        {/* Instant Mobile / Offline Demo Access */}
-        <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed var(--line)", textAlign: "center" }}>
-          <p className="muted" style={{ fontSize: "0.74rem", margin: "0 0 10px 0" }}>
-            {lang === "bn" ? "মোবাইল বা দ্রুত পরীক্ষার জন্য ১-ক্লিকে প্রবেশ করুন:" : "Testing or evaluating from mobile? Explore with 1-click:"}
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={() => {
-                loginAsDemo("admin");
-                toast.success(lang === "bn" ? "স্বাগতম, হালিমা ইয়াসমিন ওমি (অ্যাডমিন)! 🎉" : "Welcome, Halima Yesmin Omi (Admin)! 🎉");
-                router.push("/dashboard");
-              }}
-              style={{ fontSize: "0.72rem", padding: "8px 6px", borderColor: "var(--green)", color: "var(--green)", fontWeight: 700 }}
-            >
-              <ShieldCheck size={14} /> {lang === "bn" ? "ডেমো অ্যাডমিন (ওমি)" : "Demo Admin (Omi)"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={() => {
-                loginAsDemo("volunteer");
-                toast.success(lang === "bn" ? "স্বাগতম, শ্রাবণী দাস (ভলান্টিয়ার)! 🤝" : "Welcome, Shraboni Das (Volunteer)! 🤝");
-                router.push("/dashboard");
-              }}
-              style={{ fontSize: "0.72rem", padding: "8px 6px", fontWeight: 600 }}
-            >
-              {lang === "bn" ? "ডেমো ভলান্টিয়ার" : "Demo Volunteer"}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </main>;
