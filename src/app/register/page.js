@@ -7,8 +7,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useSite } from "@/components/site-provider";
 import toast from "react-hot-toast";
-import Swal from "sweetalert2";
-import GoogleAuthModal from "@/components/google-auth-modal";
 
 export default function Register() {
   const router = useRouter();
@@ -16,7 +14,6 @@ export default function Register() {
   const { lang, toggleLang, t } = useSite();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -57,47 +54,6 @@ export default function Register() {
     }
   };
 
-  const promptManualGoogleEmail = async (errorMsg = "") => {
-    setLoading(false);
-    const result = await Swal.fire({
-      title: lang === "bn" ? "গুগল অ্যাকাউন্ট দিয়ে সাইন-আপ" : "Sign up with Google Account",
-      text: lang === "bn" 
-        ? (errorMsg ? `${errorMsg}\n\nআপনার আসল জিমেইল (Gmail) ঠিকানাটি দিন:` : "আপনার আসল জিমেইল (Gmail) ঠিকানাটি প্রদান করুন:")
-        : (errorMsg ? `${errorMsg}\n\nPlease enter your real Google email address:` : "Please enter your Gmail address:"),
-      input: "email",
-      inputPlaceholder: "you@gmail.com",
-      showCancelButton: true,
-      confirmButtonText: lang === "bn" ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account",
-      cancelButtonText: lang === "bn" ? "বাতিল" : "Cancel",
-      confirmButtonColor: "#15803d",
-      background: "#18211c",
-      color: "#f2f6f2",
-      inputValidator: (value) => {
-        if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          return lang === "bn" ? "অনুগ্রহ করে একটি সঠিক ইমেইল দিন" : "Please enter a valid email address";
-        }
-      }
-    });
-
-    if (result.isConfirmed && result.value) {
-      const email = result.value.trim().toLowerCase();
-      setLoading(true);
-      try {
-        await loginWithGoogle(null, {
-          email,
-          name: email.split("@")[0],
-          photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
-        });
-        toast.success(lang === "bn" ? `স্বাগতম! (${email}) সফলভাবে অ্যাকাউন্ট তৈরি হয়েছে 🎉` : `Welcome! (${email}) signed up via Google 🎉`);
-        router.push("/dashboard");
-      } catch (err) {
-        toast.error(err.message || "Google registration failed.");
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
   const handleGoogleAuth = () => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "195070843145-52dp2o0qmpj4gch9rdc4k9k0un7do7nu.apps.googleusercontent.com";
 
@@ -107,16 +63,18 @@ export default function Register() {
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: googleClientId,
           scope: "email profile openid",
+          prompt: "select_account",
           callback: async (tokenRes) => {
             if (tokenRes.error) {
               setLoading(false);
               if (tokenRes.error === "popup_closed_by_user") {
-                toast.error(lang === "bn" ? "গুগল সাইন আপ বাতিল করা হয়েছে।" : "Google sign up cancelled.");
-                return;
+                toast.error(lang === "bn" ? "গুগল সাইন-আপ বাতিল করা হয়েছে।" : "Google sign-up cancelled.");
+              } else {
+                toast.error(lang === "bn" ? "গুগল অথেন্টিকেশন এরর: " + tokenRes.error : "Google Auth Error: " + tokenRes.error);
               }
-              await promptManualGoogleEmail(lang === "bn" ? "গুগল পপ-আপ সুরক্ষা কারণে আটকে গেছে।" : "Google popup restricted by origin policy.");
               return;
             }
+
             try {
               const googleProfileRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
                 headers: { Authorization: `Bearer ${tokenRes.access_token}` },
@@ -127,15 +85,15 @@ export default function Register() {
               }
 
               await loginWithGoogle(tokenRes.access_token, {
-                email: profile.email,
-                name: profile.name,
+                email: profile.email.toLowerCase(),
+                name: profile.name || profile.email.split("@")[0],
                 photoURL: profile.picture,
               });
 
-              toast.success(`${profile.name || profile.email} — সফলভাবে গুগল দিয়ে অ্যাকাউন্ট তৈরি হয়েছে! 🎉`);
+              toast.success(lang === "bn" ? `স্বাগতম ${profile.name || profile.email}! গুগল দিয়ে সফলভাবে অ্যাকাউন্ট তৈরি হয়েছে 🎉` : `Welcome ${profile.name || profile.email}! Signed up via Google 🎉`);
               router.push("/dashboard");
             } catch (err) {
-              await promptManualGoogleEmail();
+              toast.error(err.message || "Failed to complete Google sign up.");
             } finally {
               setLoading(false);
             }
@@ -143,10 +101,11 @@ export default function Register() {
         });
         client.requestAccessToken({ prompt: "select_account" });
       } catch (err) {
-        promptManualGoogleEmail();
+        setLoading(false);
+        toast.error("Google Client Error: " + (err.message || "Unknown error"));
       }
     } else {
-      promptManualGoogleEmail();
+      toast.error(lang === "bn" ? "গুগল সার্ভিস লোড হচ্ছে, ২ সেকেন্ড পর আবার চেষ্টা করুন।" : "Google service is loading, please try again in a moment.");
     }
   };
 
@@ -182,7 +141,7 @@ export default function Register() {
           <button
             type="button"
             className="btn btn-outline btn-block"
-            onClick={() => setShowGoogleModal(true)}
+            onClick={handleGoogleAuth}
             disabled={loading}
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontWeight: 600 }}
           >
@@ -273,6 +232,5 @@ export default function Register() {
         </div>
       </div>
     </div>
-    <GoogleAuthModal isOpen={showGoogleModal} onClose={() => setShowGoogleModal(false)} />
   </main>;
 }
