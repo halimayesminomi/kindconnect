@@ -56,6 +56,17 @@ const emergencyRequestSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  responders: [
+    {
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      name: { type: String, required: true },
+      email: { type: String, required: true },
+      phone: { type: String },
+      photoURL: { type: String },
+      message: { type: String, default: "I am ready to help!" },
+      respondedAt: { type: Date, default: Date.now },
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,

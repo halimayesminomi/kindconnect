@@ -65,7 +65,7 @@ export const api = {
   // Emergency Help & Relief
   getEmergencyRequests: (params = "") => request(`/emergency${params ? `?${params}` : ""}`),
   createEmergencyRequest: (body) => request("/emergency", { method: "POST", body: JSON.stringify(body) }),
-  respondEmergencyRequest: (id) => request(`/emergency/${id}/respond`, { method: "POST" }),
+  respondEmergencyRequest: (id, body = {}) => request(`/emergency/${id}/respond`, { method: "POST", body: JSON.stringify(body) }),
   verifyEmergencyRequest: (id, body) => request(`/emergency/${id}/verify`, { method: "PATCH", body: JSON.stringify(body) }),
 
   // Admin Control Panel

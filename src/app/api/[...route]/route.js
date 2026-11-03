@@ -24,11 +24,26 @@ function verifyToken(request) {
   }
 }
 
+// Helper: get primary admin recipient for direct chats
+async function getPrimaryAdmin() {
+  let admin = await User.findOne({
+    $or: [
+      { role: "admin" },
+      { username: "omi" },
+      { email: { $in: ["omi@kindconnect.org", "halimaomi2002@gmail.com", "halima@kindconnect.org", "halimatanima@gmail.com"] } },
+    ],
+  });
+  if (!admin) {
+    admin = await User.findOne();
+  }
+  return admin;
+}
+
 // Ensure default events exist in DB if empty
 async function ensureSeedEvents() {
   const count = await Event.countDocuments();
   if (count === 0 && FALLBACK_EVENTS?.length > 0) {
-    const seedData = FALLBACK_EVENTS.map(e => ({
+    const seedData = FALLBACK_EVENTS.map((e) => ({
       title: e.title,
       description: e.description,
       category: e.category,
@@ -46,7 +61,81 @@ async function ensureSeedEvents() {
   }
 }
 
-// GET Handler
+// Ensure default emergency relief requests exist in DB if empty
+async function ensureSeedEmergency() {
+  const count = await EmergencyRequest.countDocuments();
+  if (count === 0) {
+    const seed = [
+      {
+        title: "Urgent O+ Negative Blood Donors Needed",
+        category: "Blood Donation",
+        urgency: "Critical",
+        location: "Dhaka Medical College Hospital",
+        contactPhone: "+880 1712-345678",
+        description: "Emergency surgery patient requires 2 bags of O-negative blood immediately. Transportation provided if needed.",
+        requesterName: "Dr. Farzana Yasmin",
+        requesterEmail: "farzana@kindconnect.org",
+        volunteersJoined: 2,
+        status: "open",
+        responders: [
+          {
+            name: "Shanto Ahmed",
+            email: "shanto@kindconnect.org",
+            phone: "+880 1711-223344",
+            message: "I am ready to donate blood at DMCH.",
+            respondedAt: new Date(Date.now() - 3600000 * 4),
+          },
+          {
+            name: "Nusrat Jahan",
+            email: "nusrat@kindconnect.org",
+            phone: "+880 1819-556677",
+            message: "Can arrive within 1 hour if transport is arranged.",
+            respondedAt: new Date(Date.now() - 3600000 * 2),
+          },
+        ],
+      },
+      {
+        title: "Winter Blanket & Warm Clothes Collection",
+        category: "Winter Clothes & Blanket",
+        urgency: "High",
+        location: "Sadarghat & Old Dhaka Riverbank",
+        contactPhone: "+880 1823-456789",
+        description: "Collecting 100 warm blankets and sweaters for homeless elderly individuals around Sadarghat launch terminal.",
+        requesterName: "Tanvir Ahmed",
+        requesterEmail: "tanvir@kindconnect.org",
+        volunteersJoined: 1,
+        status: "open",
+        responders: [
+          {
+            name: "Halima Yesmin Omi",
+            email: "halimaomi2002@gmail.com",
+            phone: "+880 1700-112233",
+            message: "We have collected 25 blankets from Metropolitan University volunteers.",
+            respondedAt: new Date(Date.now() - 3600000 * 5),
+          },
+        ],
+      },
+      {
+        title: "Emergency Food Packs for 40 Slum Families",
+        category: "Food & Ration",
+        urgency: "High",
+        location: "Mirpur 11 Informal Settlement",
+        contactPhone: "+880 1934-567890",
+        description: "Distributing 1-week dry ration packs (rice, lentils, oil, potatoes) to daily-wage families affected by temporary factory shutdown.",
+        requesterName: "Tasnim Anjum",
+        requesterEmail: "tasnim@kindconnect.org",
+        volunteersJoined: 0,
+        status: "open",
+        responders: [],
+      },
+    ];
+    await EmergencyRequest.insertMany(seed).catch(() => {});
+  }
+}
+
+// =============================================================================
+// GET HANDLER
+// =============================================================================
 export async function GET(request, { params }) {
   const { route = [] } = await params;
   const path = route.join("/");
@@ -103,28 +192,30 @@ export async function GET(request, { params }) {
     // 5. Events: Recommendations
     if (path === "events/recommendations") {
       await ensureSeedEvents();
-      const events = await Event.find({ status: "published" }).limit(3);
+      const events = await Event.find({ status: "published" }).sort({ volunteersCount: -1 }).limit(4);
       return NextResponse.json({ success: true, data: events });
     }
 
-    // 6. Events: My created events
-    if (path === "events/user/my-events") {
-      const decoded = verifyToken(request);
-      if (!decoded) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-      const events = await Event.find({ creatorEmail: decoded.email }).sort({ date: 1 });
-      return NextResponse.json({ success: true, data: events });
-    }
-
-    // 7. Events: Single event details
-    if (route[0] === "events" && route.length === 2) {
+    // 6. Events: Single event details
+    if (route[0] === "events" && route.length === 2 && route[1] !== "recent" && route[1] !== "recommendations") {
       const eventId = route[1];
-      const event = await Event.findById(eventId).catch(() => null);
+      const event = await Event.findById(eventId);
       if (!event) {
-        const fallback = FALLBACK_EVENTS.find(e => e._id === eventId || e.id === eventId);
-        if (fallback) return NextResponse.json({ success: true, data: fallback });
+        const foundFallback = FALLBACK_EVENTS.find((e) => e._id === eventId || e.id === eventId);
+        if (foundFallback) {
+          return NextResponse.json({ success: true, data: foundFallback });
+        }
         return NextResponse.json({ message: "Event not found" }, { status: 404 });
       }
       return NextResponse.json({ success: true, data: event });
+    }
+
+    // 7. Events: My created events
+    if (path === "events/user/my-events") {
+      const decoded = verifyToken(request);
+      if (!decoded) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      const events = await Event.find({ creatorEmail: decoded.email }).sort({ createdAt: -1 });
+      return NextResponse.json({ success: true, data: events });
     }
 
     // 8. Registrations: My registrations
@@ -145,8 +236,8 @@ export async function GET(request, { params }) {
     // 10. Attendance: Get check-in code
     if (route[0] === "attendance" && route[1] === "code" && route[2]) {
       const eventId = route[2];
-      const code = `KC-${eventId.slice(-6).toUpperCase()}-${new Date().toISOString().slice(0, 10)}`;
-      return NextResponse.json({ success: true, code, eventId });
+      const code = `KC-${eventId.slice(-4).toUpperCase()}-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`;
+      return NextResponse.json({ success: true, data: { code, eventId } });
     }
 
     // 11. Attendance: My attendance
@@ -158,8 +249,16 @@ export async function GET(request, { params }) {
       return NextResponse.json({ success: true, data: { attendedCount: records.length, totalPoints, records } });
     }
 
-    // 12. Emergency requests
+    // 12. Attendance: Event attendees
+    if (route[0] === "attendance" && route[1] === "event" && route[2]) {
+      const eventId = route[2];
+      const attendees = await Attendance.find({ eventId }).sort({ checkedInAt: -1 });
+      return NextResponse.json({ success: true, data: attendees });
+    }
+
+    // 13. Emergency: List requests
     if (path === "emergency") {
+      await ensureSeedEmergency();
       const category = url.searchParams.get("category");
       let filter = {};
       if (category && category !== "All") filter.category = category;
@@ -167,25 +266,213 @@ export async function GET(request, { params }) {
       return NextResponse.json({ success: true, data: requests });
     }
 
-    // 13. Chat: Messages for an event
-    if (route[0] === "chat" && route[1] === "events" && route[3] === "messages") {
-      const eventId = route[2];
-      const messages = await Message.find({ eventId, type: "event_group" }).sort({ createdAt: 1 }).limit(100);
-      return NextResponse.json({ success: true, data: { messages } });
+    // 14. Emergency: Single request details with responders
+    if (route[0] === "emergency" && route.length === 2) {
+      const id = route[1];
+      const emergency = await EmergencyRequest.findById(id);
+      if (!emergency) return NextResponse.json({ message: "Emergency request not found" }, { status: 404 });
+      return NextResponse.json({ success: true, data: emergency });
     }
 
-    // 14. Chat: Direct admin messages
+    // 15. Chat: My Events / Channels
+    if (path === "chat/my-events") {
+      const decoded = verifyToken(request);
+      await ensureSeedEvents();
+      let events = [];
+      if (decoded?.role === "admin") {
+        events = await Event.find().sort({ date: 1 });
+      } else if (decoded?.id) {
+        const createdEvents = await Event.find({ creatorEmail: decoded.email });
+        const registrations = await Registration.find({ userId: decoded.id }).populate("eventId");
+        const registeredEvents = registrations.map((r) => r.eventId).filter(Boolean);
+        const map = new Map();
+        [...createdEvents, ...registeredEvents].forEach((e) => map.set(e._id.toString(), e));
+        events = Array.from(map.values());
+        if (events.length === 0) {
+          events = await Event.find({ status: "published" }).sort({ date: 1 }).limit(10);
+        }
+      } else {
+        events = await Event.find({ status: "published" }).sort({ date: 1 }).limit(10);
+      }
+
+      const summaries = await Promise.all(
+        events.map(async (ev) => {
+          const lastMsg = await Message.findOne({ type: "event_group", eventId: ev._id })
+            .sort({ createdAt: -1 })
+            .select("text senderName createdAt");
+          return {
+            _id: ev._id,
+            title: ev.title,
+            category: ev.category,
+            date: ev.date,
+            location: ev.location,
+            volunteersCount: ev.volunteersCount || 0,
+            capacity: ev.capacity,
+            lastMessage: lastMsg || null,
+          };
+        })
+      );
+      return NextResponse.json({ success: true, data: summaries });
+    }
+
+    // 16. Chat: Messages for an event group
+    if (route[0] === "chat" && route[1] === "events" && route[3] === "messages") {
+      const eventId = route[2];
+      const event = await Event.findById(eventId);
+      const messages = await Message.find({ eventId, type: "event_group" }).sort({ createdAt: 1 }).limit(200);
+      return NextResponse.json({
+        success: true,
+        data: {
+          event: event
+            ? {
+                _id: event._id,
+                title: event.title,
+                category: event.category,
+                date: event.date,
+                location: event.location,
+                capacity: event.capacity,
+                volunteersCount: event.volunteersCount,
+                creatorName: event.creatorName,
+                creatorEmail: event.creatorEmail,
+              }
+            : null,
+          messages,
+        },
+      });
+    }
+
+    // 17. Chat: Direct admin messages (for volunteer)
     if (path === "chat/direct/admin") {
       const decoded = verifyToken(request);
       if (!decoded) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      const admin = await getPrimaryAdmin();
+      if (!admin) return NextResponse.json({ message: "Admin account not found" }, { status: 404 });
+
+      const currentUserId = decoded.id;
+      const adminId = admin._id.toString();
+      const conversationId = [currentUserId, adminId].sort().join("_");
+
       const messages = await Message.find({
         type: "direct",
-        $or: [{ sender: decoded.id }, { recipient: decoded.id }],
+        $or: [
+          { conversationId },
+          { sender: currentUserId, recipient: admin._id },
+          { sender: admin._id, recipient: currentUserId },
+        ],
       }).sort({ createdAt: 1 });
-      return NextResponse.json({ success: true, data: { messages } });
+
+      await Message.updateMany(
+        { recipient: currentUserId, read: false },
+        { $set: { read: true } }
+      );
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          admin: {
+            _id: admin._id,
+            name: admin.name || "Halima Yesmin Omi",
+            username: admin.username || "omi",
+            designation: admin.designation || "Platform Admin & Lead Builder",
+            photoURL: admin.photoURL || "",
+          },
+          messages,
+        },
+      });
     }
 
-    // 15. Admin Stats
+    // 18. Chat: Direct conversations list (for admin)
+    if (path === "chat/direct/conversations") {
+      const decoded = verifyToken(request);
+      if (!decoded || decoded.role !== "admin") {
+        return NextResponse.json({ message: "Admin access required" }, { status: 403 });
+      }
+      const adminUser = await User.findById(decoded.id);
+      const messages = await Message.find({
+        type: "direct",
+        $or: [{ sender: adminUser._id }, { recipient: adminUser._id }],
+      }).sort({ createdAt: -1 });
+
+      const conversationMap = new Map();
+      for (const msg of messages) {
+        const otherUserId = msg.sender.toString() === adminUser._id.toString()
+          ? msg.recipient?.toString()
+          : msg.sender.toString();
+
+        if (!otherUserId || otherUserId === adminUser._id.toString()) continue;
+
+        if (!conversationMap.has(otherUserId)) {
+          conversationMap.set(otherUserId, {
+            userId: otherUserId,
+            lastMessage: {
+              text: msg.text,
+              createdAt: msg.createdAt,
+              senderName: msg.senderName,
+            },
+            unreadCount: 0,
+          });
+        }
+        if (msg.recipient?.toString() === adminUser._id.toString() && !msg.read) {
+          conversationMap.get(otherUserId).unreadCount += 1;
+        }
+      }
+
+      const userIds = Array.from(conversationMap.keys());
+      const users = await User.find({ _id: { $in: userIds } }).select("name username email role designation photoURL");
+      const userDict = new Map();
+      users.forEach((u) => userDict.set(u._id.toString(), u));
+
+      const result = userIds.map((uid) => ({
+        user: userDict.get(uid) || { _id: uid, name: "Volunteer User", email: "" },
+        lastMessage: conversationMap.get(uid).lastMessage,
+        unreadCount: conversationMap.get(uid).unreadCount,
+      }));
+
+      return NextResponse.json({ success: true, data: result });
+    }
+
+    // 19. Chat: Direct user conversation messages (for admin)
+    if (route[0] === "chat" && route[1] === "direct" && route[2] === "user" && route[3]) {
+      const decoded = verifyToken(request);
+      if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      const targetUserId = route[3];
+      const targetUser = await User.findById(targetUserId).select("name username email role designation photoURL");
+      if (!targetUser) return NextResponse.json({ message: "User not found" }, { status: 404 });
+
+      const conversationId = [decoded.id, targetUserId].sort().join("_");
+      const messages = await Message.find({
+        type: "direct",
+        $or: [
+          { conversationId },
+          { sender: decoded.id, recipient: targetUserId },
+          { sender: targetUserId, recipient: decoded.id },
+        ],
+      }).sort({ createdAt: 1 });
+
+      await Message.updateMany(
+        { sender: targetUserId, recipient: decoded.id, read: false },
+        { $set: { read: true } }
+      );
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          user: targetUser,
+          messages,
+        },
+      });
+    }
+
+    // 20. Notifications
+    if (path === "notifications") {
+      const notifications = [
+        { _id: "notif_1", title: "Welcome to KindConnect!", message: "Explore volunteer opportunities across Bangladesh.", read: false, createdAt: new Date() },
+        { _id: "notif_2", title: "Community Impact Update", message: "Over 500+ volunteer hours logged this month.", read: true, createdAt: new Date(Date.now() - 86400000) },
+      ];
+      return NextResponse.json({ success: true, data: notifications });
+    }
+
+    // 21. Admin Stats
     if (path === "admin/stats") {
       const decoded = verifyToken(request);
       if (!decoded || decoded.role !== "admin") {
@@ -203,12 +490,36 @@ export async function GET(request, { params }) {
       });
     }
 
-    // 16. Admin Users
+    // 22. Admin Users
     if (path === "admin/users") {
       const decoded = verifyToken(request);
       if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
       const users = await User.find().select("-password").sort({ createdAt: -1 });
       return NextResponse.json({ success: true, data: users });
+    }
+
+    // 23. Admin Events
+    if (path === "admin/events") {
+      const decoded = verifyToken(request);
+      if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      const events = await Event.find().sort({ createdAt: -1 });
+      return NextResponse.json({ success: true, data: events });
+    }
+
+    // 24. Admin Emergency
+    if (path === "admin/emergency") {
+      const decoded = verifyToken(request);
+      if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      const emergency = await EmergencyRequest.find().sort({ createdAt: -1 });
+      return NextResponse.json({ success: true, data: emergency });
+    }
+
+    // 25. Admin Registrations
+    if (path === "admin/registrations") {
+      const decoded = verifyToken(request);
+      if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      const registrations = await Registration.find().populate("eventId").sort({ registeredAt: -1 });
+      return NextResponse.json({ success: true, data: registrations });
     }
 
     return NextResponse.json({ message: "Endpoint not found", path }, { status: 404 });
@@ -218,7 +529,9 @@ export async function GET(request, { params }) {
   }
 }
 
-// POST Handler
+// =============================================================================
+// POST HANDLER
+// =============================================================================
 export async function POST(request, { params }) {
   const { route = [] } = await params;
   const path = route.join("/");
@@ -311,8 +624,8 @@ export async function POST(request, { params }) {
     }
 
     // 3. Auth: Google Login
-    if (path === "auth/google") {
-      const { userInfo } = body;
+    if (path === "auth/google" || path === "auth/social") {
+      const userInfo = body.userInfo || body;
       if (!userInfo?.email) {
         return NextResponse.json({ message: "Google account information required" }, { status: 400 });
       }
@@ -427,12 +740,44 @@ export async function POST(request, { params }) {
         ...body,
         requesterEmail: decoded?.email || body.requesterEmail || "citizen@kindconnect.org",
         requesterName: decoded?.name || body.requesterName || "Community Member",
+        volunteersJoined: 0,
+        responders: [],
       };
       const emergency = await EmergencyRequest.create(reqData);
       return NextResponse.json({ success: true, message: "Emergency request posted", data: emergency });
     }
 
-    // 7. Chat: Send event message
+    // 7. Emergency: Respond to request (join relief team)
+    if (route[0] === "emergency" && route[2] === "respond") {
+      const emergencyId = route[1];
+      const decoded = verifyToken(request);
+      const user = decoded ? await User.findById(decoded.id) : null;
+
+      const emergency = await EmergencyRequest.findById(emergencyId);
+      if (!emergency) return NextResponse.json({ message: "Emergency request not found" }, { status: 404 });
+
+      const responderData = {
+        userId: user?._id || null,
+        name: body.name || user?.name || decoded?.name || "Kind Helper",
+        email: body.email || user?.email || decoded?.email || "helper@kindconnect.org",
+        phone: body.phone || user?.phone || "+880 1700-000000",
+        photoURL: user?.photoURL || body.photoURL || "",
+        message: body.message || "I am volunteering to help in this emergency situation!",
+        respondedAt: new Date(),
+      };
+
+      emergency.responders.push(responderData);
+      emergency.volunteersJoined = emergency.responders.length;
+      await emergency.save();
+
+      return NextResponse.json({
+        success: true,
+        message: "Thank you! You have joined the emergency relief team.",
+        data: emergency,
+      });
+    }
+
+    // 8. Chat: Send event group message
     if (route[0] === "chat" && route[1] === "events" && route[3] === "messages") {
       const decoded = verifyToken(request);
       if (!decoded) return NextResponse.json({ message: "Authentication required" }, { status: 401 });
@@ -450,7 +795,7 @@ export async function POST(request, { params }) {
         senderName: user?.name || decoded.name || "Volunteer",
         senderUsername: user?.username || decoded.email.split("@")[0],
         senderRole: user?.role || "user",
-        senderDesignation: user?.designation || "Volunteer",
+        senderDesignation: user?.designation || (user?.role === "admin" ? "Platform Administrator" : "Volunteer"),
         senderPhoto: user?.photoURL || "",
         text: text.trim(),
       });
@@ -458,7 +803,68 @@ export async function POST(request, { params }) {
       return NextResponse.json({ success: true, data: message });
     }
 
-    // 8. Events: Create event
+    // 9. Chat: Send direct message to Platform Admin
+    if (path === "chat/direct/admin") {
+      const decoded = verifyToken(request);
+      if (!decoded) return NextResponse.json({ message: "Authentication required" }, { status: 401 });
+      const { text } = body;
+      if (!text || !text.trim()) return NextResponse.json({ message: "Message content cannot be empty" }, { status: 400 });
+
+      const admin = await getPrimaryAdmin();
+      if (!admin) return NextResponse.json({ message: "Admin account not found" }, { status: 404 });
+
+      const sender = await User.findById(decoded.id);
+      const conversationId = [decoded.id, admin._id.toString()].sort().join("_");
+
+      const message = await Message.create({
+        type: "direct",
+        conversationId,
+        sender: decoded.id,
+        senderName: sender?.name || decoded.name || "Volunteer",
+        senderUsername: sender?.username || decoded.email.split("@")[0],
+        senderRole: sender?.role || "user",
+        senderDesignation: sender?.designation || (sender?.role === "admin" ? "Platform Administrator" : "Volunteer"),
+        senderPhoto: sender?.photoURL || "",
+        recipient: admin._id,
+        recipientName: admin.name,
+        text: text.trim(),
+      });
+
+      return NextResponse.json({ success: true, data: message }, { status: 201 });
+    }
+
+    // 10. Chat: Admin replies directly to specific volunteer
+    if (route[0] === "chat" && route[1] === "direct" && route[2] === "user" && route[3]) {
+      const decoded = verifyToken(request);
+      if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Admin access required" }, { status: 403 });
+      const targetUserId = route[3];
+      const { text } = body;
+      if (!text || !text.trim()) return NextResponse.json({ message: "Message content cannot be empty" }, { status: 400 });
+
+      const targetUser = await User.findById(targetUserId);
+      if (!targetUser) return NextResponse.json({ message: "User not found" }, { status: 404 });
+
+      const adminUser = await User.findById(decoded.id);
+      const conversationId = [decoded.id, targetUserId].sort().join("_");
+
+      const message = await Message.create({
+        type: "direct",
+        conversationId,
+        sender: decoded.id,
+        senderName: adminUser?.name || "Platform Admin",
+        senderUsername: adminUser?.username || "admin",
+        senderRole: "admin",
+        senderDesignation: adminUser?.designation || "Platform Admin & Lead Builder",
+        senderPhoto: adminUser?.photoURL || "",
+        recipient: targetUser._id,
+        recipientName: targetUser.name,
+        text: text.trim(),
+      });
+
+      return NextResponse.json({ success: true, data: message }, { status: 201 });
+    }
+
+    // 11. Events: Create event
     if (path === "events") {
       const decoded = verifyToken(request);
       if (!decoded) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -472,6 +878,11 @@ export async function POST(request, { params }) {
       return NextResponse.json({ success: true, message: "Event created successfully", data: newEvent });
     }
 
+    // 12. Notifications: Mark all read
+    if (path === "notifications/mark-all-read") {
+      return NextResponse.json({ success: true, message: "All notifications marked as read" });
+    }
+
     return NextResponse.json({ message: "Endpoint not found", path }, { status: 404 });
   } catch (error) {
     console.error(`POST /api/${path} Error:`, error);
@@ -479,7 +890,56 @@ export async function POST(request, { params }) {
   }
 }
 
-// DELETE Handler
+// =============================================================================
+// PATCH HANDLER
+// =============================================================================
+export async function PATCH(request, { params }) {
+  const { route = [] } = await params;
+  const path = route.join("/");
+
+  try {
+    await connectDB();
+    const body = await request.json().catch(() => ({}));
+    const decoded = verifyToken(request);
+
+    // 1. Notifications: Mark read
+    if (route[0] === "notifications" && route[2] === "read") {
+      return NextResponse.json({ success: true, message: "Marked as read" });
+    }
+
+    // 2. Events: Update event
+    if (route[0] === "events" && route.length === 2) {
+      if (!decoded) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      const eventId = route[1];
+      const updated = await Event.findByIdAndUpdate(eventId, body, { new: true });
+      return NextResponse.json({ success: true, data: updated });
+    }
+
+    // 3. Admin: Update user role
+    if (route[0] === "admin" && route[1] === "users" && route[3] === "role") {
+      if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      const userId = route[2];
+      const updated = await User.findByIdAndUpdate(userId, { role: body.role }, { new: true }).select("-password");
+      return NextResponse.json({ success: true, data: updated });
+    }
+
+    // 4. Admin / Emergency: Verify emergency request
+    if ((route[0] === "admin" && route[1] === "emergency" && route[3] === "verify") || (route[0] === "emergency" && route[2] === "verify")) {
+      const id = route[0] === "admin" ? route[2] : route[1];
+      const updated = await EmergencyRequest.findByIdAndUpdate(id, body, { new: true });
+      return NextResponse.json({ success: true, data: updated });
+    }
+
+    return NextResponse.json({ message: "Endpoint not found", path }, { status: 404 });
+  } catch (error) {
+    console.error(`PATCH /api/${path} Error:`, error);
+    return NextResponse.json({ message: error.message || "Internal server error" }, { status: 500 });
+  }
+}
+
+// =============================================================================
+// DELETE HANDLER
+// =============================================================================
 export async function DELETE(request, { params }) {
   const { route = [] } = await params;
   const path = route.join("/");
@@ -487,7 +947,7 @@ export async function DELETE(request, { params }) {
   try {
     await connectDB();
 
-    // Registrations: Cancel registration
+    // 1. Registrations: Cancel registration
     if (route[0] === "registrations" && route.length === 2) {
       const decoded = verifyToken(request);
       if (!decoded) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -499,6 +959,39 @@ export async function DELETE(request, { params }) {
       }
 
       return NextResponse.json({ success: true, message: "Registration cancelled" });
+    }
+
+    // 2. Events: Delete event
+    if (route[0] === "events" && route.length === 2) {
+      const decoded = verifyToken(request);
+      if (!decoded) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      const eventId = route[1];
+      await Event.findByIdAndDelete(eventId);
+      return NextResponse.json({ success: true, message: "Event deleted" });
+    }
+
+    // 3. Admin Events: Delete
+    if (route[0] === "admin" && route[1] === "events" && route[2]) {
+      const decoded = verifyToken(request);
+      if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      await Event.findByIdAndDelete(route[2]);
+      return NextResponse.json({ success: true, message: "Event deleted by admin" });
+    }
+
+    // 4. Admin Users: Delete
+    if (route[0] === "admin" && route[1] === "users" && route[2]) {
+      const decoded = verifyToken(request);
+      if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      await User.findByIdAndDelete(route[2]);
+      return NextResponse.json({ success: true, message: "User deleted by admin" });
+    }
+
+    // 5. Admin Emergency: Delete
+    if (route[0] === "admin" && route[1] === "emergency" && route[2]) {
+      const decoded = verifyToken(request);
+      if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      await EmergencyRequest.findByIdAndDelete(route[2]);
+      return NextResponse.json({ success: true, message: "Emergency request deleted by admin" });
     }
 
     return NextResponse.json({ message: "Endpoint not found", path }, { status: 404 });
