@@ -6,7 +6,7 @@ import { HeartHandshake, ArrowUpRight, User, Mail, LockKeyhole, ImageIcon, Eye, 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useSite } from "@/components/site-provider";
-import { validateRealEmail } from "@/lib/email-validator";
+import { validateRealEmail, validateRealName } from "@/lib/email-validator";
 import toast from "react-hot-toast";
 
 export default function Register() {
@@ -33,6 +33,12 @@ export default function Register() {
     const photoURL = form.photoURL.value.trim();
 
     if (!name || !email || !password) { toast.error("Please fill in all required fields."); return; }
+
+    const nameValidation = validateRealName(name);
+    if (!nameValidation.isValid) {
+      toast.error(lang === "bn" ? (nameValidation.errorBn || nameValidation.error) : nameValidation.error);
+      return;
+    }
 
     const emailValidation = validateRealEmail(email);
     if (!emailValidation.isValid) {

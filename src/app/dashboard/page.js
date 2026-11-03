@@ -100,6 +100,93 @@ export default function Dashboard() {
       </div>
       <Link href="/dashboard/create-event" className="btn btn-primary"><Plus size={17}/> {lang === "bn" ? "ইভেন্ট তৈরি করুন" : "Create event"}</Link>
     </div>
+
+    {/* Account Identity Card (Instant visibility on login/register) */}
+    <div
+      style={{
+        background: "var(--panel)",
+        border: "1px solid var(--line)",
+        borderRadius: 16,
+        padding: "16px 20px",
+        marginBottom: 20,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: 16
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 260 }}>
+        {user?.photoURL ? (
+          <img
+            src={user.photoURL}
+            alt={user?.name || "User"}
+            style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--green)" }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              background: "rgba(34, 197, 94, 0.15)",
+              color: "var(--green)",
+              display: "grid",
+              placeItems: "center",
+              fontWeight: 800,
+              fontSize: "1.1rem"
+            }}
+          >
+            {user?.name ? user.name.slice(0, 2).toUpperCase() : "U"}
+          </div>
+        )}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <b style={{ fontSize: "0.95rem" }}>{user?.name || "KindConnect Member"}</b>
+            <span
+              style={{
+                fontSize: "0.62rem",
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: 12,
+                background: isAdmin ? "#ef4444" : "rgba(34, 197, 94, 0.12)",
+                color: isAdmin ? "#fff" : "var(--green)",
+              }}
+            >
+              {isAdmin ? "👑 ADMIN & BUILDER" : `🌱 ${user?.designation || "Active Volunteer"}`}
+            </span>
+          </div>
+          <small className="muted" style={{ fontSize: "0.75rem", display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+            <span>✉️ {user?.email}</span>
+            {user?.phone && <span>• 📞 {user.phone}</span>}
+          </small>
+          {user?.bio && (
+            <p style={{ margin: "4px 0 0", fontSize: "0.74rem", color: "var(--text)", opacity: 0.85, maxWidth: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              "{user.bio}"
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <Link
+          href="/dashboard/profile"
+          className="btn btn-outline"
+          style={{
+            padding: "8px 16px",
+            fontSize: "0.78rem",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            borderColor: "var(--green)",
+            color: "var(--green)"
+          }}
+        >
+          <span>{lang === "bn" ? "প্রোফাইল দেখুন ও এডিট করুন" : "View & Edit Profile"}</span>
+          <ArrowUpRight size={14} />
+        </Link>
+      </div>
+    </div>
     <div className="stats-grid">
       <StatCard icon={Heart} label={lang === "bn" ? "তৈরি করা ইভেন্ট" : "Events created"} value={myEvents.length} change={`${myEvents.filter(e => new Date(e.date) > new Date()).length} ${lang === "bn" ? "আসন্ন" : "upcoming"}`}/>
       <StatCard icon={CalendarDays} label={lang === "bn" ? "যুক্ত হওয়া ইভেন্ট" : "Events joined"} value={joinedEvents.length} change={`${upcomingJoined.length} ${lang === "bn" ? "আসন্ন" : "upcoming"}`}/>

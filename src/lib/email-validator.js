@@ -11,7 +11,10 @@ const DISPOSABLE_DOMAINS = new Set([
   "emailondeck.com", "dropmail.me", "tempinbox.com", "mytemp.email", "fakemailgenerator.com",
   "burnermail.io", "trashmail.net", "mailnesia.com", "disposablemail.com", "tempmail.net",
   "fake.com", "dummy.com", "test.com", "example.com", "sample.com", "asdf.com", "invalid.com",
-  "mailcatch.com", "meltmail.com", "trashymail.com", "trash-mail.at", "trashmail.at"
+  "mailcatch.com", "meltmail.com", "trashymail.com", "trash-mail.at", "trashmail.at",
+  "burner.com", "trash.com", "temp.com", "throwaway.com", "junk.com", "spambox.me",
+  "guerrilla.com", "inboxalias.com", "fakemail.net", "fakemail.com", "tempemail.co",
+  "10minemail.com", "mytempmail.com", "disposable.com", "deadaddress.com"
 ]);
 
 // Known fake / placeholder usernames
@@ -26,8 +29,12 @@ const FAKE_USERNAMES = new Set([
   "aaaaa", "bbbbb", "ccccc", "ddddd", "eeeee", "fffff", "ggggg", "hhhhh", "iiiii",
   "aaaaaa", "bbbbbb", "cccccc", "dddddd", "eeeeee", "ffffff", "gggggg", "hhhhhh", "nnnnnn",
   "123123", "12345", "1234567", "12345678", "000000", "111111", "222222", "999999",
-  "asdfgh", "zxcvbn", "qwertyuiop", "asdfasdf"
+  "asdfgh", "zxcvbn", "qwertyuiop", "asdfasdf", "blabla", "hahaha", "noname", "somebody",
+  "nobody", "whatever", "unknown", "random", "testuser", "fakeuser", "dummyuser"
 ]);
+
+// Known spam/throwaway TLDs
+const SPAM_TLDS = new Set(["tk", "ml", "ga", "cf", "gq", "top", "click", "buzz", "rest", "fit"]);
 
 /**
  * Validates whether an email address is real, strictly formatted, and not fake/disposable.
@@ -65,12 +72,33 @@ export function validateRealEmail(email) {
     };
   }
 
-  // Check disposable domains
+  // TLD check
+  const domainParts = domain.split(".");
+  const tld = domainParts[domainParts.length - 1];
+  if (!tld || tld.length < 2 || SPAM_TLDS.has(tld)) {
+    return {
+      isValid: false,
+      error: "This email domain extension is not allowed. Please use a standard email (e.g. @gmail.com, @yahoo.com).",
+      errorBn: "এই ডোমেইন এক্সটেনশনটি গ্রহণযোগ্য নয়। দয়া করে আসল জিমেইল বা ইয়াহু ইমেইল দিন।"
+    };
+  }
+
+  // Check disposable domains exact match
   if (DISPOSABLE_DOMAINS.has(domain)) {
     return {
       isValid: false,
       error: "Temporary or disposable emails are not permitted. Please use your genuine email.",
       errorBn: "ভুয়া বা ডিসপোজেবল ইমেইল গ্রহণযোগ্য নয়। অনুগ্রহ করে আপনার আসল ব্যক্তিগত ইমেইল ব্যবহার করুন।"
+    };
+  }
+
+  // Check if domain contains suspicious disposable keywords
+  const suspiciousKeywords = ["temp", "fake", "trash", "dispos", "throwaway", "burner", "mailinator", "sharklasers", "guerrilla", "junk", "spambox"];
+  if (suspiciousKeywords.some(keyword => domain.includes(keyword))) {
+    return {
+      isValid: false,
+      error: "Burner and disposable email domains are blocked. Please provide a genuine email.",
+      errorBn: "অস্থায়ী বা ভুয়া ইমেইল ডোমেইন নিষিদ্ধ। অনুগ্রহ করে আপনার আসল ইমেইল দিন।"
     };
   }
 
@@ -89,6 +117,24 @@ export function validateRealEmail(email) {
       isValid: false,
       error: "Repetitive character dummy emails are not permitted. Please use a real email.",
       errorBn: "একই অক্ষরের পুনরাবৃত্তিমূলক ভুয়া ইমেইল গ্রহণযোগ্য নয়। অনুগ্রহ করে আপনার আসল ইমেইল দিন।"
+    };
+  }
+
+  // Keyboard mash check: If username is purely alphabetic, 6+ characters long, and has ZERO vowels (a, e, i, o, u)
+  if (/^[a-z]{6,}$/.test(localPart) && !/[aeiouy]/.test(localPart)) {
+    return {
+      isValid: false,
+      error: "This email address appears to be a random keyboard mash. Please use a genuine email.",
+      errorBn: "ইমেইলটি এলোমেলো টাইপ করা ভুয়া ইমেইল মনে হচ্ছে। দয়া করে আপনার আসল ইমেইল ব্যবহার করুন।"
+    };
+  }
+
+  // Alternating keyboard mash patterns like "asdfasdf" or "qweqwe"
+  if (/^(asdf|qwerty|zxcv|1234){2,}$/.test(localPart)) {
+    return {
+      isValid: false,
+      error: "Key-pattern dummy email addresses are blocked.",
+      errorBn: "কিবোর্ড প্যাটার্নের ভুয়া ইমেইল গ্রহণযোগ্য নয়।"
     };
   }
 
@@ -157,6 +203,59 @@ export function validateRealEmail(email) {
         };
       }
     }
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Validates a person's real name (rejects numbers, pure symbols, or keyboard mash)
+ */
+export function validateRealName(name) {
+  if (!name || typeof name !== "string") {
+    return {
+      isValid: false,
+      error: "Full name is required.",
+      errorBn: "আপনার পূর্ণ নাম প্রয়োজন।"
+    };
+  }
+
+  const clean = name.trim();
+  if (clean.length < 3) {
+    return {
+      isValid: false,
+      error: "Name must be at least 3 characters long.",
+      errorBn: "নাম কমপক্ষে ৩ অক্ষরের হতে হবে।"
+    };
+  }
+
+  // Must contain at least two letters (English or Bengali)
+  const letterCount = (clean.match(/[a-zA-Z\u0980-\u09FF]/g) || []).length;
+  if (letterCount < 2) {
+    return {
+      isValid: false,
+      error: "Please enter a genuine name with valid letters.",
+      errorBn: "অনুগ্রহ করে একটি সঠিক ও পূর্ণাঙ্গ নাম লিখুন।"
+    };
+  }
+
+  // Cannot be purely repetitive characters
+  if (/^([a-zA-Z0-9])\1+$/i.test(clean.replace(/\s+/g, ""))) {
+    return {
+      isValid: false,
+      error: "Repetitive character names are not allowed.",
+      errorBn: "একই অক্ষরের পুনরাবৃত্তিমূলক নাম গ্রহণযোগ্য নয়।"
+    };
+  }
+
+  // Cannot be placeholder names
+  const lower = clean.toLowerCase();
+  if (["test", "fake", "dummy", "asdf", "qwerty", "anonymous", "null", "none", "admin"].includes(lower)) {
+    return {
+      isValid: false,
+      error: "Please use your real full name.",
+      errorBn: "অনুগ্রহ করে আপনার আসল নাম ব্যবহার করুন।"
+    };
   }
 
   return { isValid: true };

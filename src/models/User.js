@@ -37,6 +37,23 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "Volunteer",
   },
+  bio: {
+    type: String,
+    default: "",
+    maxlength: 500,
+  },
+  phone: {
+    type: String,
+    default: "",
+  },
+  location: {
+    type: String,
+    default: "Sylhet, Bangladesh",
+  },
+  skills: {
+    type: [String],
+    default: [],
+  },
   points: {
     type: Number,
     default: 100,

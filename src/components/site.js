@@ -87,6 +87,9 @@ export function Navbar() {
                     🛡️ Admin Panel
                   </Link>
                 )}
+                <Link className="btn btn-outline" href="/dashboard/profile" onClick={() => setOpen(false)} style={{ borderColor: "var(--green)", color: "var(--green)" }}>
+                  👤 {lang === "bn" ? "আমার প্রোফাইল ও অ্যাকাউন্ট" : "My Profile & Account"}
+                </Link>
                 <Link className="btn btn-ghost" href="/dashboard" onClick={() => setOpen(false)}>{t("dashboard")}</Link>
                 <Link className="btn btn-ghost" href="/dashboard/chat" onClick={() => setOpen(false)}>Live Chat</Link>
                 <button className="btn btn-primary" onClick={() => { setOpen(false); handleLogout(); }}>{t("logout")}</button>
@@ -233,6 +236,24 @@ export function Navbar() {
                         <ShieldCheck size={16} /> Admin Control Panel
                       </Link>
                     )}
+
+                    <Link
+                      href="/dashboard/profile"
+                      onClick={() => setUserMenuOpen(false)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        fontSize: "0.8rem",
+                        color: "var(--green)",
+                        fontWeight: 600,
+                        transition: "0.15s",
+                      }}
+                    >
+                      <User size={16} /> {lang === "bn" ? "আমার প্রোফাইল ও অ্যাকাউন্ট" : "My Profile & Account"}
+                    </Link>
 
                     <Link
                       href="/dashboard"

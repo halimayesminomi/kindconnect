@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, CalendarDays, ChevronDown, CircleHelp, ClipboardList, FileBadge, LayoutDashboard, LogOut, Menu, X, HeartHandshake, Plus, QrCode, ShieldCheck, MessageSquare, Sun, Moon } from "lucide-react";
+import { Bell, CalendarDays, ChevronDown, CircleHelp, ClipboardList, FileBadge, LayoutDashboard, LogOut, Menu, X, HeartHandshake, Plus, QrCode, ShieldCheck, MessageSquare, Sun, Moon, User } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "./auth-provider";
 import { useSite } from "./site-provider";
@@ -32,6 +32,7 @@ export function DashboardShell({ children, user }) {
   const navigationLinks = [
     ...(isAdmin ? [{ label: t("adminPanel"), href: "/admin", icon: ShieldCheck }] : []),
     { label: t("dashboard") || "Overview", href: "/dashboard", icon: LayoutDashboard },
+    { label: lang === "bn" ? "প্রোফাইল ও অ্যাকাউন্ট" : "My Profile", href: "/dashboard/profile", icon: User },
     { label: t("liveChat") || "Live Chat", href: "/dashboard/chat", icon: MessageSquare },
     { label: t("myEvents") || "My events", href: "/dashboard/events", icon: ClipboardList },
     { label: t("myJoined") || "Joined events", href: "/dashboard/joined", icon: CalendarDays },
@@ -190,7 +191,7 @@ export function DashboardShell({ children, user }) {
             )}
           </div>
 
-          <div className="profile-mini" title={displayName}>
+          <Link href="/dashboard/profile" className="profile-mini" title={`${displayName} - View & Edit Profile`} style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}>
             {user?.photoURL ? (
               <img src={user.photoURL} alt={displayName} title={displayName} style={{width:34,height:34,borderRadius:"50%",objectFit:"cover"}} />
             ) : (
@@ -212,7 +213,7 @@ export function DashboardShell({ children, user }) {
               <small style={{ color: isAdmin ? "#ff6b6b" : isOrganizer ? "var(--green)" : "inherit", fontWeight: isOrganizer ? 700 : 400 }}>{role}</small>
             </span>
             <ChevronDown size={15}/>
-          </div>
+          </Link>
         </div>
       </header>
       <div className="dashboard-content">{children}</div>

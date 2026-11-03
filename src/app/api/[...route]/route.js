@@ -7,7 +7,7 @@ import Attendance from "@/models/Attendance";
 import EmergencyRequest from "@/models/EmergencyRequest";
 import Message from "@/models/Message";
 import { FALLBACK_EVENTS } from "@/lib/fallbackData";
-import { validateRealEmail } from "@/lib/email-validator";
+import { validateRealEmail, validateRealName } from "@/lib/email-validator";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -554,6 +554,15 @@ export async function POST(request, { params }) {
         return NextResponse.json({ message: "Name, email, and password are required" }, { status: 400 });
       }
 
+      // Strict validation for real person name
+      const nameValidation = validateRealName(name);
+      if (!nameValidation.isValid) {
+        return NextResponse.json({
+          message: nameValidation.errorBn || nameValidation.error,
+          errorEn: nameValidation.error
+        }, { status: 400 });
+      }
+
       const cleanEmail = email.trim().toLowerCase();
 
       // Strict validation for real email address (rejects fake / dummy / disposable emails)
@@ -1017,6 +1026,66 @@ export async function PATCH(request, { params }) {
     await connectDB();
     const body = await request.json().catch(() => ({}));
     const decoded = verifyToken(request);
+
+    // 0. User: Update own profile (name, bio, phone, location, photoURL, password)
+    if (path === "auth/profile" || path === "auth/user") {
+      if (!decoded) return NextResponse.json({ message: "Authentication required" }, { status: 401 });
+      const user = await User.findById(decoded.id);
+      if (!user) return NextResponse.json({ message: "User not found" }, { status: 404 });
+
+      const { name, bio, phone, photoURL, location, currentPassword, newPassword } = body;
+
+      if (name && typeof name === "string") {
+        const nameVal = validateRealName(name);
+        if (!nameVal.isValid) {
+          return NextResponse.json({ message: nameVal.errorBn || nameVal.error }, { status: 400 });
+        }
+        user.name = name.trim();
+      }
+
+      if (typeof bio === "string") {
+        user.bio = bio.trim().slice(0, 500);
+      }
+
+      if (typeof phone === "string") {
+        user.phone = phone.trim();
+      }
+
+      if (typeof location === "string") {
+        user.location = location.trim();
+      }
+
+      if (photoURL && typeof photoURL === "string") {
+        user.photoURL = photoURL.trim();
+      }
+
+      // Password update if provided
+      if (newPassword) {
+        if (!currentPassword) {
+          return NextResponse.json({ message: "পাসওয়ার্ড পরিবর্তনের জন্য বর্তমান পাসওয়ার্ড দিন।" }, { status: 400 });
+        }
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+          return NextResponse.json({ message: "বর্তমান পাসওয়ার্ডটি সঠিক নয়।" }, { status: 400 });
+        }
+        if (newPassword.length < 6) {
+          return NextResponse.json({ message: "নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।" }, { status: 400 });
+        }
+        user.password = await bcrypt.hash(newPassword, 10);
+      }
+
+      await user.save();
+
+      const userObj = user.toObject();
+      delete userObj.password;
+
+      return NextResponse.json({
+        success: true,
+        message: "প্রোফাইল সফলভাবে আপডেট করা হয়েছে!",
+        user: userObj,
+        data: userObj,
+      });
+    }
 
     // 1. Notifications: Mark read
     if (route[0] === "notifications" && route[2] === "read") {

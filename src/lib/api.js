@@ -36,6 +36,7 @@ export const api = {
   socialLogin: (body) => request("/auth/social", { method: "POST", body: JSON.stringify(body) }),
   googleLogin: (credential, userInfo) => request("/auth/google", { method: "POST", body: JSON.stringify({ credential, userInfo }) }),
   getUser: () => request("/auth/user"),
+  updateProfile: (body) => request("/auth/profile", { method: "PATCH", body: JSON.stringify(body) }),
 
   // Events
   getEvents: (params = "") => request(`/events${params ? `?${params}` : ""}`),

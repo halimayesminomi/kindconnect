@@ -104,6 +104,23 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const updateProfile = async (body) => {
+    const res = await api.updateProfile(body);
+    if (res.user) {
+      setUser(res.user);
+    }
+    return res;
+  };
+
+  const refreshUser = async () => {
+    try {
+      const res = await api.getUser();
+      if (res.data || res.user) {
+        setUser(res.data || res.user);
+      }
+    } catch (_) {}
+  };
+
   const logout = () => {
     localStorage.removeItem("kindconnect_token");
     localStorage.removeItem("kindconnect_demo_user");
@@ -111,7 +128,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginAsDemo, socialLogin, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, register, loginAsDemo, socialLogin, loginWithGoogle, logout, updateProfile, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
