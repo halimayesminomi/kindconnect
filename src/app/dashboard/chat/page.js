@@ -26,6 +26,7 @@ export default function ChatPage() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const initialEventId = searchParams.get("event");
+  const initialUserId = searchParams.get("user");
 
   // Selected chat target:
   // - { type: "event", id: eventId, data: eventObj }
@@ -47,8 +48,29 @@ export default function ChatPage() {
 
   const messagesEndRef = useRef(null);
   const pollingRef = useRef(null);
+  const lastOtherMsgIdRef = useRef(null);
 
   const isAdmin = user?.role === "admin";
+
+  // Audio chime for new incoming messages
+  const playChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(659.25, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+    } catch (_) {}
+  };
 
   // Auto-scroll to bottom of messages container
   const scrollToBottom = () => {
@@ -75,10 +97,11 @@ export default function ChatPage() {
 
       // 2. Load Direct Chats
       let firstUserConv = null;
+      let convList = [];
       if (isAdmin) {
         // Admin loads all direct volunteer conversations
         const convRes = await api.getAdminConversations();
-        const convList = convRes.data || [];
+        convList = convRes.data || [];
         setAdminConversations(convList);
         if (convList.length > 0) {
           firstUserConv = convList[0];
@@ -93,6 +116,17 @@ export default function ChatPage() {
 
       // Default selection if not already selected
       if (!activeChat) {
+        if (initialUserId && isAdmin) {
+          const matchUserConv = convList.find(c => c.user._id === initialUserId || c.user.id === initialUserId);
+          if (matchUserConv) {
+            selectChat({ type: "user", id: matchUserConv.user._id, data: matchUserConv.user });
+            return;
+          } else {
+            selectChat({ type: "user", id: initialUserId, data: { _id: initialUserId, name: "Volunteer" } });
+            return;
+          }
+        }
+
         if (initialEventId) {
           const match = evList.find(e => e._id === initialEventId || e.id === initialEventId);
           if (match) {
@@ -131,6 +165,49 @@ export default function ChatPage() {
     }
   }, [initialEventId, events]);
 
+  // Listen for initialUserId query param
+  useEffect(() => {
+    if (initialUserId && isAdmin && adminConversations.length > 0) {
+      const match = adminConversations.find(c => c.user._id === initialUserId || c.user.id === initialUserId);
+      if (match) {
+        selectChat({ type: "user", id: match.user._id, data: match.user });
+      }
+    }
+  }, [initialUserId, isAdmin, adminConversations]);
+
+  // Safe message updater that merges server messages without wiping optimistic ones,
+  // and detects incoming messages to play chime & toast.
+  const updateMessagesSafely = (serverMessages) => {
+    if (!Array.isArray(serverMessages)) return;
+
+    setMessages(prev => {
+      const prevIds = new Set(prev.map(m => m._id?.toString()));
+      const currentUserId = user?._id || user?.id;
+
+      let newOtherMsg = null;
+      serverMessages.forEach(m => {
+        const mid = m._id?.toString();
+        const isFromOther = m.sender?.toString() !== currentUserId?.toString();
+        if (mid && !prevIds.has(mid) && isFromOther && !mid.startsWith("temp_")) {
+          newOtherMsg = m;
+        }
+      });
+
+      if (newOtherMsg && newOtherMsg._id?.toString() !== lastOtherMsgIdRef.current) {
+        lastOtherMsgIdRef.current = newOtherMsg._id?.toString();
+        playChime();
+        toast(`${newOtherMsg.senderName}: ${newOtherMsg.text}`, {
+          icon: "💬",
+          duration: 4000,
+        });
+      }
+
+      // Keep pending optimistic messages that haven't been resolved yet
+      const optimisticPending = prev.filter(m => m._id && m._id.toString().startsWith("temp_"));
+      return [...serverMessages, ...optimisticPending];
+    });
+  };
+
   // Fetch messages for currently active chat
   const fetchMessages = async (silent = false) => {
     if (!activeChat) return;
@@ -140,12 +217,12 @@ export default function ChatPage() {
       if (activeChat.type === "event") {
         const res = await api.getEventMessages(activeChat.id);
         if (res.data?.messages) {
-          setMessages(res.data.messages);
+          updateMessagesSafely(res.data.messages);
         }
       } else if (activeChat.type === "admin") {
         const res = await api.getDirectAdminChat();
         if (res.data?.messages) {
-          setMessages(res.data.messages);
+          updateMessagesSafely(res.data.messages);
         }
         if (res.data?.admin) {
           setAdminInfo(res.data.admin);
@@ -153,7 +230,7 @@ export default function ChatPage() {
       } else if (activeChat.type === "user") {
         const res = await api.getAdminUserChat(activeChat.id);
         if (res.data?.messages) {
-          setMessages(res.data.messages);
+          updateMessagesSafely(res.data.messages);
         }
       }
     } catch (err) {
@@ -419,6 +496,11 @@ export default function ChatPage() {
                       <span className="category-pill" style={{ position: "static", fontSize: "0.55rem", padding: "1px 6px" }}>
                         {ev.category}
                       </span>
+                      {ev.unreadCount > 0 && (
+                        <span style={{ background: "var(--green)", color: "#062817", fontSize: "0.6rem", fontWeight: 800, padding: "1px 6px", borderRadius: 10 }}>
+                          {ev.unreadCount} new
+                        </span>
+                      )}
                       <small className="muted" style={{ fontSize: "0.65rem", marginLeft: "auto" }}>
                         {ev.volunteersCount}/{ev.capacity}
                       </small>

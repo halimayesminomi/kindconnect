@@ -60,6 +60,11 @@ const messageSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  readBy: {
+    type: [String],
+    default: [],
+    index: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

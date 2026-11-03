@@ -15,9 +15,30 @@ export function DashboardShell({ children, user }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const notifRef = useRef(null);
+  const lastUnreadCountRef = useRef(null);
   const { logout } = useAuth();
   const { lang, setLang, theme, setTheme, t } = useSite();
+
+  const playNotificationChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+    } catch (_) {}
+  };
 
   const displayName = user?.name || "User";
   const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
@@ -33,7 +54,7 @@ export function DashboardShell({ children, user }) {
     ...(isAdmin ? [{ label: t("adminPanel"), href: "/admin", icon: ShieldCheck }] : []),
     { label: t("dashboard") || "Overview", href: "/dashboard", icon: LayoutDashboard },
     { label: lang === "bn" ? "প্রোফাইল ও অ্যাকাউন্ট" : "My Profile", href: "/dashboard/profile", icon: User },
-    { label: t("liveChat") || "Live Chat", href: "/dashboard/chat", icon: MessageSquare },
+    { label: t("liveChat") || "Live Chat", href: "/dashboard/chat", icon: MessageSquare, badge: unreadChatCount > 0 ? unreadChatCount : null },
     { label: t("myEvents") || "My events", href: "/dashboard/events", icon: ClipboardList },
     { label: t("myJoined") || "Joined events", href: "/dashboard/joined", icon: CalendarDays },
     { label: t("qrAttendance") || "QR Attendance", href: "/dashboard/attendance", icon: QrCode },
@@ -43,15 +64,34 @@ export function DashboardShell({ children, user }) {
   const fetchNotifs = () => {
     api.getNotifications()
       .then(res => {
-        setNotifications(res.data?.notifications || []);
-        setUnreadCount(res.data?.unreadCount || 0);
+        const notifs = res.data?.notifications || res.notifications || [];
+        const count = typeof res.data?.unreadCount === "number" ? res.data.unreadCount : (res.unreadCount || 0);
+        const chatCount = typeof res.data?.unreadChatCount === "number" ? res.data.unreadChatCount : (res.unreadChatCount || 0);
+
+        if (lastUnreadCountRef.current !== null && count > lastUnreadCountRef.current && count > 0) {
+          playNotificationChime();
+          const latestUnread = notifs.find(n => !n.read);
+          if (latestUnread) {
+            import("react-hot-toast").then(({ default: toast }) => {
+              toast(latestUnread.title + ": " + latestUnread.message, {
+                icon: "💬",
+                duration: 5000,
+              });
+            });
+          }
+        }
+        lastUnreadCountRef.current = count;
+
+        setNotifications(notifs);
+        setUnreadCount(count);
+        setUnreadChatCount(chatCount);
       })
       .catch(() => {});
   };
 
   useEffect(() => {
     fetchNotifs();
-    const interval = setInterval(fetchNotifs, 15000);
+    const interval = setInterval(fetchNotifs, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -94,8 +134,24 @@ export function DashboardShell({ children, user }) {
       </div>
       <div className="workspace-label">{t("workspace")}</div>
       <div className="side-links">
-        {navigationLinks.map(({ label, href, icon: Icon }) => (
-          <Link key={href} href={href} onClick={() => setOpen(false)} className={`side-link ${pathname === href ? "selected" : ""}`}><Icon size={18}/>{label}</Link>
+        {navigationLinks.map(({ label, href, icon: Icon, badge }) => (
+          <Link key={href} href={href} onClick={() => setOpen(false)} className={`side-link ${pathname === href ? "selected" : ""}`}>
+            <Icon size={18}/>
+            <span style={{ flex: 1 }}>{label}</span>
+            {badge && (
+              <span style={{
+                background: "var(--green)",
+                color: "#062817",
+                fontSize: "0.68rem",
+                fontWeight: 900,
+                padding: "2px 7px",
+                borderRadius: "10px",
+                lineHeight: 1,
+              }}>
+                {badge}
+              </span>
+            )}
+          </Link>
         ))}
       </div>
       <div className="sidebar-bottom">
@@ -134,7 +190,27 @@ export function DashboardShell({ children, user }) {
               title={t("notifications")}
             >
               <Bell size={18}/>
-              {unreadCount > 0 && <i style={{ background: "var(--green)", width: 8, height: 8, position: "absolute", top: 6, right: 6, borderRadius: "50%" }} />}
+              {unreadCount > 0 && (
+                <span style={{
+                  background: "#ff4d4f",
+                  color: "#fff",
+                  fontSize: "0.62rem",
+                  fontWeight: 900,
+                  position: "absolute",
+                  top: -2,
+                  right: -2,
+                  minWidth: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "0 3px",
+                  lineHeight: 1
+                }}>
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </button>
 
             {notifOpen && (
@@ -166,24 +242,41 @@ export function DashboardShell({ children, user }) {
                   notifications.map(n => (
                     <div 
                       key={n._id} 
-                      onClick={() => !n.read && handleMarkOne(n._id)}
+                      onClick={() => {
+                        if (!n.read) handleMarkOne(n._id);
+                        if (n.link) {
+                          setNotifOpen(false);
+                          router.push(n.link);
+                        }
+                      }}
                       style={{
                         padding: "10px",
                         borderRadius: 8,
                         marginBottom: 6,
                         background: n.read ? "transparent" : "rgba(183, 243, 107, 0.08)",
-                        border: `1px solid ${n.read ? "transparent" : "rgba(183, 243, 107, 0.2)"}`,
+                        border: `1px solid ${n.read ? "transparent" : "rgba(183, 243, 107, 0.25)"}`,
                         cursor: "pointer",
                         transition: "0.2s"
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <b style={{ fontSize: "0.78rem", color: n.read ? "inherit" : "var(--green)" }}>{n.title}</b>
-                        <small className="muted" style={{ fontSize: "0.62rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
+                          {n.type?.startsWith("chat") ? (
+                            <MessageSquare size={14} style={{ color: "var(--green)", flexShrink: 0 }} />
+                          ) : (
+                            <Bell size={14} style={{ color: "var(--green)", flexShrink: 0 }} />
+                          )}
+                          <b style={{ fontSize: "0.78rem", color: n.read ? "inherit" : "var(--green)", lineHeight: 1.2 }}>
+                            {n.title}
+                          </b>
+                        </div>
+                        <small className="muted" style={{ fontSize: "0.62rem", whiteSpace: "nowrap" }}>
                           {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </small>
                       </div>
-                      <p className="muted" style={{ fontSize: "0.72rem", margin: "4px 0 0" }}>{n.message}</p>
+                      <p className="muted" style={{ fontSize: "0.73rem", margin: "4px 0 0", paddingLeft: 20 }}>
+                        {n.message}
+                      </p>
                     </div>
                   ))
                 )}

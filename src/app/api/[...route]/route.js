@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import Event from "@/models/Event";
@@ -25,8 +26,58 @@ function verifyToken(request) {
   }
 }
 
+// Helper: convert any ID (string or ObjectId) into an array of [string, ObjectId]
+function toIdVariants(id) {
+  if (!id) return [];
+  const str = id.toString();
+  const variants = [str];
+  if (mongoose.Types.ObjectId.isValid(str)) {
+    try {
+      variants.push(new mongoose.Types.ObjectId(str));
+    } catch (_) {}
+  }
+  return variants;
+}
+
+// Helper: get all admin identifiers (both string and ObjectId variants)
+async function getAllAdminIdentities() {
+  const admins = await User.find({
+    $or: [
+      { role: "admin" },
+      { username: "omi" },
+      { email: { $in: ["omi@kindconnect.org", "halimaomi2002@gmail.com", "halima@kindconnect.org", "halimatanima@gmail.com"] } },
+    ],
+  }).select("_id username email name photoURL designation");
+
+  const ids = admins.map((a) => a._id.toString());
+  ids.push("6ae7865647ced7d2f5db2906"); // legacy admin id
+  ids.push("6ae7a9fa62048a3fab131ca5"); // real admin omi id
+
+  const uniqueStringIds = Array.from(new Set(ids.filter(Boolean)));
+  const queryVariants = [];
+  uniqueStringIds.forEach((id) => {
+    queryVariants.push(id);
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      try {
+        queryVariants.push(new mongoose.Types.ObjectId(id));
+      } catch (_) {}
+    }
+  });
+
+  const primaryAdmin = admins.find((a) => a.username === "omi") || admins[0] || null;
+
+  return {
+    primaryAdmin,
+    adminList: admins,
+    adminStringIds: uniqueStringIds,
+    adminQueryVariants: queryVariants,
+  };
+}
+
 // Helper: get primary admin recipient for direct chats
 async function getPrimaryAdmin() {
+  const { primaryAdmin } = await getAllAdminIdentities();
+  if (primaryAdmin) return primaryAdmin;
   let admin = await User.findOne({
     $or: [
       { role: "admin" },
@@ -283,8 +334,9 @@ export async function GET(request, { params }) {
       if (decoded?.role === "admin") {
         events = await Event.find().sort({ date: 1 });
       } else if (decoded?.id) {
+        const userVariants = toIdVariants(decoded.id);
         const createdEvents = await Event.find({ creatorEmail: decoded.email });
-        const registrations = await Registration.find({ userId: decoded.id }).populate("eventId");
+        const registrations = await Registration.find({ userId: { $in: userVariants } }).populate("eventId");
         const registeredEvents = registrations.map((r) => r.eventId).filter(Boolean);
         const map = new Map();
         [...createdEvents, ...registeredEvents].forEach((e) => map.set(e._id.toString(), e));
@@ -298,9 +350,24 @@ export async function GET(request, { params }) {
 
       const summaries = await Promise.all(
         events.map(async (ev) => {
-          const lastMsg = await Message.findOne({ type: "event_group", eventId: ev._id })
+          const evVariants = toIdVariants(ev._id);
+          const lastMsg = await Message.findOne({
+            type: "event_group",
+            eventId: { $in: evVariants },
+          })
             .sort({ createdAt: -1 })
             .select("text senderName createdAt");
+
+          let unreadCount = 0;
+          if (decoded?.id) {
+            unreadCount = await Message.countDocuments({
+              type: "event_group",
+              eventId: { $in: evVariants },
+              sender: { $nin: toIdVariants(decoded.id) },
+              readBy: { $ne: decoded.id.toString() },
+            });
+          }
+
           return {
             _id: ev._id,
             title: ev.title,
@@ -310,6 +377,7 @@ export async function GET(request, { params }) {
             volunteersCount: ev.volunteersCount || 0,
             capacity: ev.capacity,
             lastMessage: lastMsg || null,
+            unreadCount,
           };
         })
       );
@@ -318,6 +386,7 @@ export async function GET(request, { params }) {
 
     // 16. Chat: Messages for an event group
     if (route[0] === "chat" && route[1] === "events" && route[3] === "messages") {
+      const decoded = verifyToken(request);
       const eventId = route[2];
       let event = null;
       try {
@@ -326,7 +395,25 @@ export async function GET(request, { params }) {
       if (!event) {
         event = FALLBACK_EVENTS.find((e) => e._id === eventId || e.id === eventId);
       }
-      const messages = await Message.find({ eventId, type: "event_group" }).sort({ createdAt: 1 }).limit(200);
+
+      const evVariants = toIdVariants(eventId);
+      const messages = await Message.find({
+        type: "event_group",
+        eventId: { $in: evVariants },
+      }).sort({ createdAt: 1 }).limit(300);
+
+      // When user views event messages, mark them as read by this user
+      if (decoded?.id) {
+        await Message.updateMany(
+          {
+            type: "event_group",
+            eventId: { $in: evVariants },
+            readBy: { $ne: decoded.id.toString() },
+          },
+          { $addToSet: { readBy: decoded.id.toString() } }
+        ).catch(() => {});
+      }
+
       return NextResponse.json({
         success: true,
         data: {
@@ -352,36 +439,38 @@ export async function GET(request, { params }) {
     if (path === "chat/direct/admin") {
       const decoded = verifyToken(request);
       if (!decoded) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-      const admin = await getPrimaryAdmin();
-      if (!admin) return NextResponse.json({ message: "Admin account not found" }, { status: 404 });
+      const { primaryAdmin, adminQueryVariants, adminStringIds } = await getAllAdminIdentities();
+      if (!primaryAdmin) return NextResponse.json({ message: "Admin account not found" }, { status: 404 });
 
-      const currentUserId = decoded.id;
-      const adminId = admin._id.toString();
-      const conversationId = [currentUserId, adminId].sort().join("_");
+      const currentUserIdStr = decoded.id.toString();
+      const currentUserVariants = toIdVariants(currentUserIdStr);
+
+      const conversationIds = adminStringIds.map((aid) => [currentUserIdStr, aid].sort().join("_"));
 
       const messages = await Message.find({
         type: "direct",
         $or: [
-          { conversationId },
-          { sender: currentUserId, recipient: admin._id },
-          { sender: admin._id, recipient: currentUserId },
+          { conversationId: { $in: conversationIds } },
+          { sender: { $in: currentUserVariants }, recipient: { $in: adminQueryVariants } },
+          { sender: { $in: adminQueryVariants }, recipient: { $in: currentUserVariants } },
         ],
       }).sort({ createdAt: 1 });
 
+      // Mark unread messages sent by admin to this user as read
       await Message.updateMany(
-        { recipient: currentUserId, read: false },
+        { recipient: { $in: currentUserVariants }, read: false },
         { $set: { read: true } }
-      );
+      ).catch(() => {});
 
       return NextResponse.json({
         success: true,
         data: {
           admin: {
-            _id: admin._id,
-            name: admin.name || "Halima Yesmin Omi",
-            username: admin.username || "omi",
-            designation: admin.designation || "Platform Admin & Lead Builder",
-            photoURL: admin.photoURL || "",
+            _id: primaryAdmin._id,
+            name: primaryAdmin.name || "Halima Yesmin Omi",
+            username: primaryAdmin.username || "omi",
+            designation: primaryAdmin.designation || "Platform Admin & Lead Builder",
+            photoURL: primaryAdmin.photoURL || "",
           },
           messages,
         },
@@ -394,19 +483,24 @@ export async function GET(request, { params }) {
       if (!decoded || decoded.role !== "admin") {
         return NextResponse.json({ message: "Admin access required" }, { status: 403 });
       }
-      const adminUser = await User.findById(decoded.id);
+      const { adminQueryVariants, adminStringIds } = await getAllAdminIdentities();
+
       const messages = await Message.find({
         type: "direct",
-        $or: [{ sender: adminUser._id }, { recipient: adminUser._id }],
+        $or: [
+          { sender: { $in: adminQueryVariants } },
+          { recipient: { $in: adminQueryVariants } },
+        ],
       }).sort({ createdAt: -1 });
 
       const conversationMap = new Map();
       for (const msg of messages) {
-        const otherUserId = msg.sender.toString() === adminUser._id.toString()
-          ? msg.recipient?.toString()
-          : msg.sender.toString();
+        const senderStr = msg.sender?.toString();
+        const recipientStr = msg.recipient?.toString();
+        const isAdminSender = adminStringIds.includes(senderStr);
+        const otherUserId = isAdminSender ? recipientStr : senderStr;
 
-        if (!otherUserId || otherUserId === adminUser._id.toString()) continue;
+        if (!otherUserId || adminStringIds.includes(otherUserId)) continue;
 
         if (!conversationMap.has(otherUserId)) {
           conversationMap.set(otherUserId, {
@@ -419,13 +513,19 @@ export async function GET(request, { params }) {
             unreadCount: 0,
           });
         }
-        if (msg.recipient?.toString() === adminUser._id.toString() && !msg.read) {
+        if (adminStringIds.includes(recipientStr) && !msg.read) {
           conversationMap.get(otherUserId).unreadCount += 1;
         }
       }
 
       const userIds = Array.from(conversationMap.keys());
-      const users = await User.find({ _id: { $in: userIds } }).select("name username email role designation photoURL");
+      const users = await User.find({
+        $or: [
+          { _id: { $in: userIds } },
+          { _id: { $in: userIds.filter((id) => mongoose.Types.ObjectId.isValid(id)).map((id) => new mongoose.Types.ObjectId(id)) } },
+        ],
+      }).select("name username email role designation photoURL");
+
       const userDict = new Map();
       users.forEach((u) => userDict.set(u._id.toString(), u));
 
@@ -443,23 +543,28 @@ export async function GET(request, { params }) {
       const decoded = verifyToken(request);
       if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
       const targetUserId = route[3];
-      const targetUser = await User.findById(targetUserId).select("name username email role designation photoURL");
+      const targetVariants = toIdVariants(targetUserId);
+
+      let targetUser = await User.findOne({ _id: { $in: targetVariants } }).select("name username email role designation photoURL");
       if (!targetUser) return NextResponse.json({ message: "User not found" }, { status: 404 });
 
-      const conversationId = [decoded.id, targetUserId].sort().join("_");
+      const { adminQueryVariants, adminStringIds } = await getAllAdminIdentities();
+      const conversationIds = adminStringIds.map((aid) => [targetUserId.toString(), aid].sort().join("_"));
+
       const messages = await Message.find({
         type: "direct",
         $or: [
-          { conversationId },
-          { sender: decoded.id, recipient: targetUserId },
-          { sender: targetUserId, recipient: decoded.id },
+          { conversationId: { $in: conversationIds } },
+          { sender: { $in: targetVariants }, recipient: { $in: adminQueryVariants } },
+          { sender: { $in: adminQueryVariants }, recipient: { $in: targetVariants } },
         ],
       }).sort({ createdAt: 1 });
 
+      // Mark volunteer messages to admin as read
       await Message.updateMany(
-        { sender: targetUserId, recipient: decoded.id, read: false },
+        { sender: { $in: targetVariants }, recipient: { $in: adminQueryVariants }, read: false },
         { $set: { read: true } }
-      );
+      ).catch(() => {});
 
       return NextResponse.json({
         success: true,
@@ -470,13 +575,154 @@ export async function GET(request, { params }) {
       });
     }
 
-    // 20. Notifications
+    // 20. Notifications (Real database queries for direct chats & event group messages)
     if (path === "notifications") {
-      const notifications = [
-        { _id: "notif_1", title: "Welcome to KindConnect!", message: "Explore volunteer opportunities across Bangladesh.", read: false, createdAt: new Date() },
-        { _id: "notif_2", title: "Community Impact Update", message: "Over 500+ volunteer hours logged this month.", read: true, createdAt: new Date(Date.now() - 86400000) },
-      ];
-      return NextResponse.json({ success: true, data: notifications });
+      const decoded = verifyToken(request);
+      if (!decoded) {
+        return NextResponse.json({ success: true, data: { notifications: [], unreadCount: 0, unreadChatCount: 0 } });
+      }
+
+      const userIdStr = decoded.id.toString();
+      const userVariants = toIdVariants(userIdStr);
+      const isAdmin = decoded.role === "admin";
+      const { adminQueryVariants } = await getAllAdminIdentities();
+
+      const notifs = [];
+
+      // A. Unread direct messages
+      let directUnread = [];
+      if (isAdmin) {
+        directUnread = await Message.find({
+          type: "direct",
+          recipient: { $in: adminQueryVariants },
+          sender: { $nin: adminQueryVariants },
+          read: false,
+        })
+          .sort({ createdAt: -1 })
+          .limit(20);
+      } else {
+        directUnread = await Message.find({
+          type: "direct",
+          recipient: { $in: userVariants },
+          read: false,
+        })
+          .sort({ createdAt: -1 })
+          .limit(20);
+      }
+
+      directUnread.forEach((m) => {
+        notifs.push({
+          _id: m._id.toString(),
+          type: "chat_direct",
+          title: isAdmin
+            ? `Direct message from ${m.senderName}`
+            : `Direct message from ${m.senderName} (Admin)`,
+          message: m.text,
+          senderId: m.sender?.toString(),
+          senderName: m.senderName,
+          senderPhoto: m.senderPhoto,
+          read: false,
+          createdAt: m.createdAt,
+          link: isAdmin ? `/dashboard/chat?user=${m.sender?.toString()}` : `/dashboard/chat`,
+        });
+      });
+
+      // B. Recent event group messages in events user is part of
+      let userEventIds = [];
+      if (isAdmin) {
+        const recentEvMsgs = await Message.find({
+          type: "event_group",
+          sender: { $nin: adminQueryVariants },
+        })
+          .sort({ createdAt: -1 })
+          .limit(10);
+        userEventIds = Array.from(new Set(recentEvMsgs.map((m) => m.eventId?.toString()).filter(Boolean)));
+      } else {
+        const [registrations, createdEvents] = await Promise.all([
+          Registration.find({ userId: { $in: userVariants } }).select("eventId"),
+          Event.find({ creatorEmail: decoded.email }).select("_id"),
+        ]);
+        userEventIds = [
+          ...registrations.map((r) => r.eventId?.toString()).filter(Boolean),
+          ...createdEvents.map((e) => e._id.toString()),
+        ];
+        if (userEventIds.length === 0) {
+          const publicEvents = await Event.find({ status: "published" }).select("_id").limit(5);
+          userEventIds = publicEvents.map((e) => e._id.toString());
+        }
+      }
+
+      const allEventVariants = [];
+      userEventIds.forEach((eid) => {
+        toIdVariants(eid).forEach((v) => allEventVariants.push(v));
+      });
+
+      if (allEventVariants.length > 0) {
+        const eventGroupMsgs = await Message.find({
+          type: "event_group",
+          eventId: { $in: allEventVariants },
+          sender: { $nin: userVariants },
+        })
+          .sort({ createdAt: -1 })
+          .limit(15);
+
+        const uniqueEids = Array.from(new Set(eventGroupMsgs.map((m) => m.eventId?.toString()).filter(Boolean)));
+        const events = await Event.find({
+          $or: [
+            { _id: { $in: uniqueEids } },
+            { _id: { $in: uniqueEids.filter((id) => mongoose.Types.ObjectId.isValid(id)).map((id) => new mongoose.Types.ObjectId(id)) } },
+          ],
+        }).select("title");
+        const eventTitleMap = new Map();
+        events.forEach((e) => eventTitleMap.set(e._id.toString(), e.title));
+
+        eventGroupMsgs.forEach((m) => {
+          const eid = m.eventId?.toString();
+          const isRead = Array.isArray(m.readBy) && m.readBy.includes(userIdStr);
+          notifs.push({
+            _id: m._id.toString(),
+            type: "chat_event",
+            eventId: eid,
+            title: `Event Group: ${eventTitleMap.get(eid) || "Volunteer Team"}`,
+            message: `${m.senderName}: ${m.text}`,
+            senderName: m.senderName,
+            senderPhoto: m.senderPhoto,
+            read: isRead,
+            createdAt: m.createdAt,
+            link: `/dashboard/chat?event=${eid}`,
+          });
+        });
+      }
+
+      // C. General System / Welcome Notification if empty
+      if (notifs.length === 0) {
+        notifs.push({
+          _id: "system_welcome",
+          type: "system",
+          title: "স্বাগতম KindConnect-এ!",
+          message: "নতুন ভলান্টিয়ার ইভেন্টে যোগ দিন এবং ইভেন্ট চ্যাটে যুক্ত থাকুন।",
+          read: true,
+          createdAt: new Date(),
+          link: "/dashboard/events",
+        });
+      }
+
+      notifs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      const unreadCount = notifs.filter((n) => !n.read).length;
+      const unreadChatCount = notifs.filter((n) => !n.read && (n.type === "chat_direct" || n.type === "chat_event")).length;
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          notifications: notifs,
+          unreadCount,
+          unreadChatCount,
+        },
+        notifications: notifs,
+        unreadCount,
+        unreadChatCount,
+      });
     }
 
     // 21. Admin Stats
@@ -978,7 +1224,7 @@ export async function POST(request, { params }) {
 
       const message = await Message.create({
         type: "event_group",
-        eventId,
+        eventId: eventId.toString(),
         sender: senderId,
         senderName: user?.name || decoded.name || "Volunteer",
         senderUsername: user?.username || (decoded.email ? decoded.email.split("@")[0] : (decoded.name || "volunteer")),
@@ -986,6 +1232,8 @@ export async function POST(request, { params }) {
         senderDesignation: user?.designation || (isAdmin ? "Platform Admin & Lead Builder" : "Volunteer"),
         senderPhoto: user?.photoURL || "",
         text: text.trim(),
+        read: false,
+        readBy: [senderId.toString()],
       });
 
       return NextResponse.json({ success: true, data: message });
@@ -1029,6 +1277,8 @@ export async function POST(request, { params }) {
         recipient: admin._id,
         recipientName: admin.name,
         text: text.trim(),
+        read: false,
+        readBy: [senderId.toString()],
       });
 
       return NextResponse.json({ success: true, data: message }, { status: 201 });
@@ -1068,6 +1318,8 @@ export async function POST(request, { params }) {
         recipient: targetUser._id,
         recipientName: targetUser.name,
         text: text.trim(),
+        read: false,
+        readBy: [senderId.toString()],
       });
 
       return NextResponse.json({ success: true, data: message }, { status: 201 });
@@ -1089,6 +1341,29 @@ export async function POST(request, { params }) {
 
     // 12. Notifications: Mark all read
     if (path === "notifications/mark-all-read") {
+      const decoded = verifyToken(request);
+      if (decoded?.id) {
+        const userIdStr = decoded.id.toString();
+        const userVariants = toIdVariants(userIdStr);
+        const { adminQueryVariants } = await getAllAdminIdentities();
+
+        if (decoded.role === "admin") {
+          await Message.updateMany(
+            { recipient: { $in: adminQueryVariants }, read: false },
+            { $set: { read: true } }
+          );
+        } else {
+          await Message.updateMany(
+            { recipient: { $in: userVariants }, read: false },
+            { $set: { read: true } }
+          );
+        }
+
+        await Message.updateMany(
+          { type: "event_group", readBy: { $ne: userIdStr } },
+          { $addToSet: { readBy: userIdStr } }
+        );
+      }
       return NextResponse.json({ success: true, message: "All notifications marked as read" });
     }
 
@@ -1173,6 +1448,14 @@ export async function PATCH(request, { params }) {
 
     // 1. Notifications: Mark read
     if (route[0] === "notifications" && route[2] === "read") {
+      const decoded = verifyToken(request);
+      const notifId = route[1];
+      if (decoded?.id && mongoose.Types.ObjectId.isValid(notifId)) {
+        await Message.findByIdAndUpdate(notifId, {
+          read: true,
+          $addToSet: { readBy: decoded.id.toString() },
+        }).catch(() => {});
+      }
       return NextResponse.json({ success: true, message: "Marked as read" });
     }
 
