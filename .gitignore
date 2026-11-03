@@ -1,13 +1,14 @@
 # Dependencies
 **/node_modules/
 **/.next/
-kindconnect-ui/server/node_modules/
-kindconnect-ui/.next/
-kindconnect-ui/node_modules/
+node_modules/
+.next/
 
 # Environments
 **/.env*.local
-kindconnect-ui/server/.env
+server/.env
+.env
+.env.local
 
 # Logs & OS files
 *.log
