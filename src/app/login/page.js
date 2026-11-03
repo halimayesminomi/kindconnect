@@ -50,24 +50,6 @@ export default function Login() {
   const handleGoogleAuth = () => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "195070843145-52dp2o0qmpj4gch9rdc4k9k0un7do7nu.apps.googleusercontent.com";
 
-    // If on a Vercel domain where Google Cloud Origin isn't yet configured, provide seamless sign in
-    const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel.app");
-
-    if (isVercel) {
-      setLoading(true);
-      loginWithGoogle(null, {
-        name: "Halima Yesmin",
-        email: "halimatanima@gmail.com",
-        photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
-      }).then(() => {
-        toast.success("Signed in with Google (Halima Yesmin)! 🎉");
-        router.push("/dashboard");
-      }).catch((err) => {
-        toast.error(err.message || "Google sign in failed.");
-      }).finally(() => setLoading(false));
-      return;
-    }
-
     if (typeof window !== "undefined" && window.google?.accounts?.oauth2) {
       setLoading(true);
       try {
@@ -77,8 +59,10 @@ export default function Login() {
           callback: async (tokenRes) => {
             if (tokenRes.error) {
               setLoading(false);
-              if (tokenRes.error !== "popup_closed_by_user") {
-                toast.error("Google login cancelled.");
+              if (tokenRes.error === "popup_closed_by_user") {
+                toast.error(lang === "bn" ? "গুগল সাইন ইন বাতিল করা হয়েছে।" : "Google sign in cancelled.");
+              } else {
+                toast.error(lang === "bn" ? "গুগল অথেন্টিকেশন এরর: Google Cloud Console-এ এই ডোমেনটি যোগ করুন।" : "Google Auth Error: Verify authorized origin in Google Cloud Console.");
               }
               return;
             }
@@ -91,13 +75,13 @@ export default function Login() {
                 throw new Error("No verified email returned from Google.");
               }
 
-              await loginWithGoogle(null, {
+              await loginWithGoogle(tokenRes.access_token, {
                 email: profile.email,
                 name: profile.name,
                 photoURL: profile.picture,
               });
 
-              toast.success(`Welcome, ${profile.name || profile.email}! Signed in via Google 🎉`);
+              toast.success(`${profile.name || profile.email} — সফলভাবে গুগল দিয়ে লগইন হয়েছে! 🎉`);
               router.push("/dashboard");
             } catch (err) {
               toast.error(err.message || "Failed to complete Google sign in.");
@@ -109,15 +93,10 @@ export default function Login() {
         client.requestAccessToken({ prompt: "select_account" });
       } catch (err) {
         setLoading(false);
-        console.error("Google Client Error:", err);
-        loginWithGoogle(null, { name: "Google Volunteer", email: "volunteer@kindconnect.org" });
-        toast.success("Signed in via Google! 🎉");
-        router.push("/dashboard");
+        toast.error("Google Client Error: " + (err.message || "Unknown error"));
       }
     } else {
-      loginWithGoogle(null, { name: "Google Volunteer", email: "volunteer@kindconnect.org" });
-      toast.success("Signed in via Google! 🎉");
-      router.push("/dashboard");
+      toast.error(lang === "bn" ? "গুগল সাইন-ইন সার্ভিস লোড হচ্ছে, কয়েক সেকেন্ড পর চেষ্টা করুন।" : "Google service is loading, please try again in a moment.");
     }
   };
 
