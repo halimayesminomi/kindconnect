@@ -345,8 +345,8 @@ export default function EmergencyPage() {
 
         {/* MODAL 1: VIEW RESPONDERS LIST */}
         {viewingRespondersRequest && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", backdropFilter: "blur(6px)", display: "grid", placeItems: "center", zIndex: 150, padding: 20 }}>
-            <div style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 18, padding: "26px", width: "100%", maxWidth: 520, maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", backdropFilter: "blur(6px)", display: "grid", placeItems: "center", zIndex: 150, padding: "12px" }}>
+            <div className="kc-modal-box" style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 18, padding: "24px", maxWidth: 520, maxHeight: "88vh", display: "flex", flexDirection: "column" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, borderBottom: "1px solid var(--line)", paddingBottom: 12 }}>
                 <div>
                   <span className="category-pill static-pill" style={{ fontSize: "0.65rem", marginBottom: 6 }}>
@@ -452,8 +452,8 @@ export default function EmergencyPage() {
 
         {/* MODAL 2: SUBMIT HELP / RESPONSE FORM */}
         {respondingRequest && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", backdropFilter: "blur(6px)", display: "grid", placeItems: "center", zIndex: 150, padding: 20 }}>
-            <div style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 18, padding: "26px", width: "100%", maxWidth: 480 }}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", backdropFilter: "blur(6px)", display: "grid", placeItems: "center", zIndex: 150, padding: "12px" }}>
+            <div className="kc-modal-box" style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 18, padding: "24px", maxWidth: 480 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                 <div>
                   <span className="category-pill static-pill" style={{ fontSize: "0.65rem", marginBottom: 6 }}>
@@ -532,8 +532,8 @@ export default function EmergencyPage() {
 
         {/* MODAL 3: CREATE NEW EMERGENCY REQUEST */}
         {showModal && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", backdropFilter: "blur(6px)", display: "grid", placeItems: "center", zIndex: 150, padding: 20 }}>
-            <div style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 18, padding: "28px", width: "100%", maxWidth: 540 }}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", backdropFilter: "blur(6px)", display: "grid", placeItems: "center", zIndex: 150, padding: "12px" }}>
+            <div className="kc-modal-box" style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 18, padding: "24px", maxWidth: 540 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                 <div>
                   <h2 style={{ margin: "0 0 4px", fontSize: "1.45rem" }}>

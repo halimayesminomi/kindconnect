@@ -32,7 +32,8 @@ export default function EventDetails() {
       user.email?.toLowerCase().includes("omi")
     )
   );
-  const canChat = hasJoined || isCreatorOrAdmin;
+  // Any logged-in community member can chat with volunteers in the event room
+  const canChat = Boolean(user);
 
   const fetchChatMessages = (silent = false) => {
     if (event?._id && canChat) {
@@ -240,7 +241,7 @@ export default function EventDetails() {
                 </div>
 
                 {/* Input form */}
-                <form onSubmit={handleSendChat} style={{ display: "flex", gap: 8 }}>
+                <form onSubmit={handleSendChat} style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <input
                     type="text"
                     placeholder={lang === "bn" ? "গ্রুপে বার্তা লিখুন..." : "Type a message to the event group..."}
@@ -249,12 +250,12 @@ export default function EventDetails() {
                     disabled={sendingChat}
                     style={{
                       flex: 1,
-                      padding: "8px 14px",
+                      padding: "10px 14px",
                       borderRadius: 10,
                       border: "1px solid var(--line)",
                       background: "var(--bg)",
                       color: "var(--text)",
-                      fontSize: "0.82rem",
+                      fontSize: "15px",
                       outline: "none"
                     }}
                   />
@@ -262,28 +263,25 @@ export default function EventDetails() {
                     type="submit"
                     disabled={sendingChat || !chatText.trim()}
                     className="btn btn-primary"
-                    style={{ padding: "8px 16px", fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: 6 }}
+                    style={{ padding: "10px 18px", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 42 }}
                   >
-                    <span>{lang === "bn" ? "পাঠান" : "Send"}</span> <Send size={14} />
+                    <span>{lang === "bn" ? "পাঠান" : "Send"}</span> <Send size={15} />
                   </button>
                 </form>
               </div>
             ) : (
               <div style={{ textAlign: "center", padding: "24px 16px", background: "var(--bg)", borderRadius: 12, border: "1px dashed var(--line)" }}>
                 <Lock size={22} color="var(--muted)" style={{ margin: "0 auto 8px" }} />
-                <h4 style={{ margin: 0, fontSize: "0.95rem" }}>{lang === "bn" ? "গ্রুপ চ্যাটটি অংশগ্রহণকারীদের জন্য সংরক্ষিত" : "Event Group Chat is Reserved for Attendees"}</h4>
-                <p className="muted" style={{ fontSize: "0.76rem", margin: "4px auto 14px", maxWidth: 360 }}>
-                  {lang === "bn" ? "সহ-ভলান্টিয়ারদের সাথে সরাসরি আলোচনা এবং কার্যক্রম সমন্বয় করতে এই ইভেন্টে যোগ দিন!" : "Join this event to collaborate with fellow volunteers in the group chat and coordinate logistics!"}
+                <h4 style={{ margin: 0, fontSize: "0.95rem" }}>
+                  {lang === "bn" ? "ভলান্টিয়ার গ্রুপ চ্যাটে অংশ নিতে সাইন ইন করুন" : "Sign In to Access Volunteer Group Chat"}
+                </h4>
+                <p className="muted" style={{ fontSize: "0.78rem", margin: "6px auto 16px", maxWidth: 360 }}>
+                  {lang === "bn" ? "ইভেন্টের অন্যান্য ভলান্টিয়ার এবং অ্যাডমিনের সাথে সরাসরি যোগাযোগ ও সমন্বয় করতে আপনার অ্যাকাউন্টে লগইন করুন।" : "Log in to collaborate and coordinate directly with fellow volunteers and administrators."}
                 </p>
-                {!user ? (
-                  <Link href="/login" className="btn btn-primary" style={{ padding: "6px 16px", fontSize: "0.78rem" }}>
-                    {lang === "bn" ? "ইভেন্টে যুক্ত হতে সাইন ইন করুন" : "Sign In to Join Event"}
-                  </Link>
-                ) : (
-                  <button onClick={handleJoin} disabled={joining} className="btn btn-primary" style={{ padding: "6px 16px", fontSize: "0.78rem" }}>
-                    {joining ? (lang === "bn" ? "যুক্ত হচ্ছে..." : "Joining...") : (lang === "bn" ? "গ্রুপ চ্যাট আনলক করতে ইভেন্টে যোগ দিন" : "Join Event to Unlock Group Chat")}
-                  </button>
-                )}
+                <Link href="/login" className="btn btn-primary" style={{ padding: "8px 20px", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <span>{lang === "bn" ? "লগইন করুন" : "Sign In to Chat"}</span>
+                  <ArrowUpRight size={14} />
+                </Link>
               </div>
             )}
           </div>

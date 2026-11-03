@@ -319,7 +319,13 @@ export async function GET(request, { params }) {
     // 16. Chat: Messages for an event group
     if (route[0] === "chat" && route[1] === "events" && route[3] === "messages") {
       const eventId = route[2];
-      const event = await Event.findById(eventId);
+      let event = null;
+      try {
+        event = await Event.findById(eventId);
+      } catch (_) {}
+      if (!event) {
+        event = FALLBACK_EVENTS.find((e) => e._id === eventId || e.id === eventId);
+      }
       const messages = await Message.find({ eventId, type: "event_group" }).sort({ createdAt: 1 }).limit(200);
       return NextResponse.json({
         success: true,
@@ -863,16 +869,28 @@ export async function POST(request, { params }) {
       const { text } = body;
       if (!text || !text.trim()) return NextResponse.json({ message: "Message text is required" }, { status: 400 });
 
-      const user = await User.findById(decoded.id);
+      let user = null;
+      try {
+        if (decoded.id) user = await User.findById(decoded.id);
+      } catch (_) {}
+      if (!user && decoded.email) {
+        try {
+          user = await User.findOne({ email: decoded.email.toLowerCase() });
+        } catch (_) {}
+      }
+
+      const senderId = user?._id || decoded.id;
+      const senderRole = user?.role || decoded.role || "user";
+      const isAdmin = senderRole === "admin" || decoded.role === "admin";
 
       const message = await Message.create({
         type: "event_group",
         eventId,
-        sender: decoded.id,
+        sender: senderId,
         senderName: user?.name || decoded.name || "Volunteer",
-        senderUsername: user?.username || decoded.email.split("@")[0],
-        senderRole: user?.role || "user",
-        senderDesignation: user?.designation || (user?.role === "admin" ? "Platform Administrator" : "Volunteer"),
+        senderUsername: user?.username || (decoded.email ? decoded.email.split("@")[0] : (decoded.name || "volunteer")),
+        senderRole,
+        senderDesignation: user?.designation || (isAdmin ? "Platform Admin & Lead Builder" : "Volunteer"),
         senderPhoto: user?.photoURL || "",
         text: text.trim(),
       });
@@ -890,17 +908,30 @@ export async function POST(request, { params }) {
       const admin = await getPrimaryAdmin();
       if (!admin) return NextResponse.json({ message: "Admin account not found" }, { status: 404 });
 
-      const sender = await User.findById(decoded.id);
-      const conversationId = [decoded.id, admin._id.toString()].sort().join("_");
+      let sender = null;
+      try {
+        if (decoded.id) sender = await User.findById(decoded.id);
+      } catch (_) {}
+      if (!sender && decoded.email) {
+        try {
+          sender = await User.findOne({ email: decoded.email.toLowerCase() });
+        } catch (_) {}
+      }
+
+      const senderId = sender?._id || decoded.id;
+      const senderRole = sender?.role || decoded.role || "user";
+      const isAdmin = senderRole === "admin" || decoded.role === "admin";
+      const adminId = admin._id.toString();
+      const conversationId = [senderId.toString(), adminId].sort().join("_");
 
       const message = await Message.create({
         type: "direct",
         conversationId,
-        sender: decoded.id,
+        sender: senderId,
         senderName: sender?.name || decoded.name || "Volunteer",
-        senderUsername: sender?.username || decoded.email.split("@")[0],
-        senderRole: sender?.role || "user",
-        senderDesignation: sender?.designation || (sender?.role === "admin" ? "Platform Administrator" : "Volunteer"),
+        senderUsername: sender?.username || (decoded.email ? decoded.email.split("@")[0] : (decoded.name || "volunteer")),
+        senderRole,
+        senderDesignation: sender?.designation || (isAdmin ? "Platform Admin & Lead Builder" : "Volunteer"),
         senderPhoto: sender?.photoURL || "",
         recipient: admin._id,
         recipientName: admin.name,
@@ -918,18 +949,26 @@ export async function POST(request, { params }) {
       const { text } = body;
       if (!text || !text.trim()) return NextResponse.json({ message: "Message content cannot be empty" }, { status: 400 });
 
-      const targetUser = await User.findById(targetUserId);
+      let targetUser = null;
+      try {
+        targetUser = await User.findById(targetUserId);
+      } catch (_) {}
       if (!targetUser) return NextResponse.json({ message: "User not found" }, { status: 404 });
 
-      const adminUser = await User.findById(decoded.id);
-      const conversationId = [decoded.id, targetUserId].sort().join("_");
+      let adminUser = null;
+      try {
+        adminUser = await User.findById(decoded.id);
+      } catch (_) {}
+
+      const senderId = adminUser?._id || decoded.id;
+      const conversationId = [senderId.toString(), targetUserId.toString()].sort().join("_");
 
       const message = await Message.create({
         type: "direct",
         conversationId,
-        sender: decoded.id,
-        senderName: adminUser?.name || "Platform Admin",
-        senderUsername: adminUser?.username || "admin",
+        sender: senderId,
+        senderName: adminUser?.name || "Halima Yesmin Omi",
+        senderUsername: adminUser?.username || "omi",
         senderRole: "admin",
         senderDesignation: adminUser?.designation || "Platform Admin & Lead Builder",
         senderPhoto: adminUser?.photoURL || "",

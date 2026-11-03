@@ -8,14 +8,12 @@ const messageSchema = new mongoose.Schema({
     default: "event_group",
   },
   eventId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Event",
+    type: mongoose.Schema.Types.Mixed,
     default: null,
     index: true,
   },
   sender: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    type: mongoose.Schema.Types.Mixed,
     required: true,
   },
   senderName: {
@@ -39,8 +37,7 @@ const messageSchema = new mongoose.Schema({
     default: "",
   },
   recipient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    type: mongoose.Schema.Types.Mixed,
     default: null,
     index: true,
   },

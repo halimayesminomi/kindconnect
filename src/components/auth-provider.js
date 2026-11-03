@@ -15,29 +15,24 @@ export function AuthProvider({ children }) {
 
     if (token) {
       if (token.startsWith("local-token-")) {
-        // Active local/offline session
-        if (demo) {
-          try { setUser(JSON.parse(demo)); } catch (_) { setUser(null); }
-        }
+        // Stale offline/dummy token: purge to enforce real authentication
+        localStorage.removeItem("kindconnect_token");
+        localStorage.removeItem("kindconnect_demo_user");
+        setUser(null);
         setLoading(false);
       } else {
         // Remote JWT token from backend
         api.getUser()
           .then((data) => setUser(data.data || data.user))
           .catch(() => {
-            if (demo) {
-              try { setUser(JSON.parse(demo)); } catch (_) { setUser(null); }
-            } else {
-              localStorage.removeItem("kindconnect_token");
-              setUser(null);
-            }
+            localStorage.removeItem("kindconnect_token");
+            localStorage.removeItem("kindconnect_demo_user");
+            setUser(null);
           })
           .finally(() => setLoading(false));
       }
-    } else if (demo) {
-      try { setUser(JSON.parse(demo)); } catch (_) { setUser(null); }
-      setLoading(false);
     } else {
+      localStorage.removeItem("kindconnect_demo_user");
       setLoading(false);
     }
   }, []);
