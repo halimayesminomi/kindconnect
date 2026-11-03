@@ -75,6 +75,8 @@ export const api = {
   adminAuth: (body) => request("/admin/auth", { method: "POST", body: JSON.stringify(body) }),
   getAdminStats: () => request("/admin/stats"),
   getAdminUsers: (params = "") => request(`/admin/users${params ? `?${params}` : ""}`),
+  getAdminUserProfile: (id) => request(`/admin/users/${id}/profile`),
+  updateAdminUser: (id, body) => request(`/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   updateUserRole: (id, body) => request(`/admin/users/${id}/role`, { method: "PATCH", body: JSON.stringify(body) }),
   deleteUser: (id) => request(`/admin/users/${id}`, { method: "DELETE" }),
   getAdminEvents: () => request("/admin/events"),

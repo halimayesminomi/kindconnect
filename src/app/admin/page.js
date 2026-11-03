@@ -16,7 +16,16 @@ import {
   UserCheck, 
   Sparkles,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  Mail,
+  Phone,
+  MapPin,
+  Award,
+  Clock,
+  MessageSquare,
+  ExternalLink,
+  Edit3
 } from "lucide-react";
 import { StatCard } from "@/components/cards";
 import { api } from "@/lib/api";
@@ -36,6 +45,17 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState("");
   const [updatingUserId, setUpdatingUserId] = useState(null);
+
+  // Inspected User Profile State
+  const [inspectedUserId, setInspectedUserId] = useState(null);
+  const [inspectedProfile, setInspectedProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileModalTab, setProfileModalTab] = useState("bio"); // "bio" | "joined" | "created" | "governance"
+  const [govDesignation, setGovDesignation] = useState("");
+  const [govRole, setGovRole] = useState("user");
+  const [govPoints, setGovPoints] = useState(100);
+  const [govHours, setGovHours] = useState(2);
+  const [savingGov, setSavingGov] = useState(false);
 
   // Events state
   const [events, setEvents] = useState([]);
@@ -145,6 +165,57 @@ export default function AdminPage() {
       toast.error(err.message || "Failed to update role.");
     } finally {
       setUpdatingUserId(null);
+    }
+  };
+
+  // Inspect full user profile handler
+  const openUserProfile = async (userId) => {
+    setInspectedUserId(userId);
+    setLoadingProfile(true);
+    setProfileModalTab("bio");
+    try {
+      const res = await api.getAdminUserProfile(userId);
+      if (res.data) {
+        setInspectedProfile(res.data);
+        setGovDesignation(res.data.user?.designation || "");
+        setGovRole(res.data.user?.role || "user");
+        setGovPoints(res.data.user?.points || 0);
+        setGovHours(res.data.user?.hoursVolunteered || 0);
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to load user profile");
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  // Save user governance updates
+  const handleSaveUserGovernance = async (e) => {
+    e.preventDefault();
+    if (!inspectedProfile?.user?._id) return;
+    setSavingGov(true);
+    try {
+      const payload = {
+        role: govRole,
+        designation: govDesignation.trim(),
+        points: Number(govPoints),
+        hoursVolunteered: Number(govHours)
+      };
+      await api.updateAdminUser(inspectedProfile.user._id, payload);
+      toast.success("User governance details updated successfully! ✓");
+
+      // Update local state
+      setInspectedProfile((prev) => ({
+        ...prev,
+        user: { ...prev.user, ...payload }
+      }));
+      setUsers((prev) =>
+        prev.map((u) => (u._id === inspectedProfile.user._id ? { ...u, ...payload } : u))
+      );
+    } catch (err) {
+      toast.error(err.message || "Failed to update user");
+    } finally {
+      setSavingGov(false);
     }
   };
 
@@ -452,7 +523,11 @@ export default function AdminPage() {
                     return (
                       <tr key={u._id}>
                         <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div 
+                            onClick={() => openUserProfile(u._id)}
+                            style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+                            title="Click to inspect user profile"
+                          >
                             {u.photoURL ? (
                               <img
                                 src={u.photoURL}
@@ -542,6 +617,27 @@ export default function AdminPage() {
 
                         <td style={{ textAlign: "right" }}>
                           <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            {/* Inspect Profile Button */}
+                            <button
+                              onClick={() => openUserProfile(u._id)}
+                              className="btn btn-outline"
+                              style={{
+                                padding: "4px 9px",
+                                fontSize: ".72rem",
+                                fontWeight: 700,
+                                gap: 5,
+                                borderRadius: 8,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                borderColor: "var(--green)",
+                                color: "var(--green)",
+                              }}
+                              title="Inspect full user profile and activity"
+                            >
+                              <Eye size={13} />
+                              <span>প্রোফাইল</span>
+                            </button>
+
                             {/* Role change dropdown or buttons */}
                             {u.role !== "admin" && (
                               <button
@@ -918,6 +1014,421 @@ export default function AdminPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+      {/* ========================================================================= */}
+      {/* MODAL: ADMIN USER PROFILE INSPECTOR */}
+      {/* ========================================================================= */}
+      {inspectedUserId && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.82)",
+            backdropFilter: "blur(6px)",
+            display: "grid",
+            placeItems: "center",
+            zIndex: 180,
+            padding: "16px",
+          }}
+        >
+          <div
+            className="kc-modal-box"
+            style={{
+              background: "var(--panel)",
+              border: "1px solid var(--line)",
+              borderRadius: 20,
+              padding: "26px",
+              maxWidth: 720,
+              width: "100%",
+              maxHeight: "90vh",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.35)",
+              position: "relative",
+            }}
+          >
+            {/* Modal Close Button */}
+            <button
+              onClick={() => {
+                setInspectedUserId(null);
+                setInspectedProfile(null);
+              }}
+              className="icon-btn"
+              style={{ position: "absolute", top: 16, right: 16, width: 34, height: 34 }}
+              title="Close Inspector"
+            >
+              <X size={16} />
+            </button>
+
+            {loadingProfile || !inspectedProfile ? (
+              <div style={{ padding: "60px 20px", textAlign: "center" }}>
+                <RefreshCw size={28} className="animate-spin" style={{ color: "var(--green)", margin: "0 auto 14px" }} />
+                <h4 style={{ margin: "0 0 6px" }}>ব্যবহারকারীর প্রোফাইল তথ্য লোড হচ্ছে...</h4>
+                <p className="muted" style={{ fontSize: "0.8rem", margin: 0 }}>
+                  Fetching volunteer activity history, registrations, and account metadata...
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Header Identity Card */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 18,
+                    paddingBottom: 20,
+                    borderBottom: "1px solid var(--line)",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div style={{ position: "relative" }}>
+                    {inspectedProfile.user?.photoURL ? (
+                      <img
+                        src={inspectedProfile.user.photoURL}
+                        alt={inspectedProfile.user.name}
+                        style={{
+                          width: 76,
+                          height: 76,
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          border: "3px solid var(--green)",
+                        }}
+                      />
+                    ) : (
+                      <span
+                        className="avatar"
+                        style={{ width: 76, height: 76, fontSize: "1.6rem", border: "3px solid var(--green)" }}
+                      >
+                        {inspectedProfile.user?.name ? inspectedProfile.user.name.slice(0, 2).toUpperCase() : "U"}
+                      </span>
+                    )}
+                    <span
+                      style={{
+                        position: "absolute",
+                        bottom: 2,
+                        right: 2,
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        background: "var(--green)",
+                        border: "2px solid var(--panel)",
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 220 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+                      <h2 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 800 }}>
+                        {inspectedProfile.user?.name}
+                      </h2>
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: 12,
+                          fontSize: "0.65rem",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                          background:
+                            inspectedProfile.user?.role === "admin"
+                              ? "#ef4444"
+                              : inspectedProfile.user?.role === "organizer"
+                              ? "rgba(183, 243, 107, 0.2)"
+                              : "rgba(148, 163, 184, 0.2)",
+                          color:
+                            inspectedProfile.user?.role === "admin"
+                              ? "#fff"
+                              : inspectedProfile.user?.role === "organizer"
+                              ? "var(--green)"
+                              : "var(--text)",
+                          border: "1px solid var(--line)",
+                        }}
+                      >
+                        {inspectedProfile.user?.role}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", fontSize: "0.78rem" }}>
+                      <span className="muted">@{inspectedProfile.user?.username || "no-username"}</span>
+                      <span className="muted">•</span>
+                      <span style={{ color: "var(--green)", fontWeight: 600 }}>
+                        {inspectedProfile.user?.designation || "Community Volunteer"}
+                      </span>
+                    </div>
+
+                    {/* Contact Chips */}
+                    <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8, fontSize: "0.76rem" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <Mail size={13} color="var(--green)" /> {inspectedProfile.user?.email}
+                      </span>
+                      {inspectedProfile.user?.phone && (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                          <Phone size={13} color="var(--green)" /> {inspectedProfile.user.phone}
+                        </span>
+                      )}
+                      {inspectedProfile.user?.location && (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }} className="muted">
+                          <MapPin size={13} /> {inspectedProfile.user.location}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Metrics Bar */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+                    gap: 10,
+                    margin: "16px 0",
+                  }}
+                >
+                  <div style={{ padding: "10px 14px", borderRadius: 10, background: "var(--bg)", border: "1px solid var(--line)" }}>
+                    <small className="muted" style={{ fontSize: "0.68rem", display: "block" }}>মোট পয়েন্ট (Points)</small>
+                    <b style={{ fontSize: "1.1rem", color: "var(--green)" }}>{inspectedProfile.user?.points || 0}</b>
+                  </div>
+                  <div style={{ padding: "10px 14px", borderRadius: 10, background: "var(--bg)", border: "1px solid var(--line)" }}>
+                    <small className="muted" style={{ fontSize: "0.68rem", display: "block" }}>সেবামূলক ঘণ্টা (Hours)</small>
+                    <b style={{ fontSize: "1.1rem" }}>{inspectedProfile.user?.hoursVolunteered || 0} hrs</b>
+                  </div>
+                  <div style={{ padding: "10px 14px", borderRadius: 10, background: "var(--bg)", border: "1px solid var(--line)" }}>
+                    <small className="muted" style={{ fontSize: "0.68rem", display: "block" }}>যুক্ত ইভেন্ট (Joined)</small>
+                    <b style={{ fontSize: "1.1rem" }}>{inspectedProfile.stats?.joinedCount || 0}</b>
+                  </div>
+                  <div style={{ padding: "10px 14px", borderRadius: 10, background: "var(--bg)", border: "1px solid var(--line)" }}>
+                    <small className="muted" style={{ fontSize: "0.68rem", display: "block" }}>আয়োজিত ইভেন্ট (Created)</small>
+                    <b style={{ fontSize: "1.1rem" }}>{inspectedProfile.stats?.createdCount || 0}</b>
+                  </div>
+                </div>
+
+                {/* Modal Tab Switcher */}
+                <div style={{ display: "flex", gap: 8, borderBottom: "1px solid var(--line)", paddingBottom: 10, marginBottom: 16, flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => setProfileModalTab("bio")}
+                    className={`btn ${profileModalTab === "bio" ? "btn-primary" : "btn-ghost"}`}
+                    style={{ padding: "6px 14px", fontSize: "0.78rem" }}
+                  >
+                    <FileText size={14} style={{ marginRight: 5 }} /> বায়ো ও বিবরণ
+                  </button>
+                  <button
+                    onClick={() => setProfileModalTab("joined")}
+                    className={`btn ${profileModalTab === "joined" ? "btn-primary" : "btn-ghost"}`}
+                    style={{ padding: "6px 14px", fontSize: "0.78rem" }}
+                  >
+                    <CalendarDays size={14} style={{ marginRight: 5 }} /> যুক্ত ইভেন্ট ({inspectedProfile.stats?.joinedCount || 0})
+                  </button>
+                  <button
+                    onClick={() => setProfileModalTab("created")}
+                    className={`btn ${profileModalTab === "created" ? "btn-primary" : "btn-ghost"}`}
+                    style={{ padding: "6px 14px", fontSize: "0.78rem" }}
+                  >
+                    <Sparkles size={14} style={{ marginRight: 5 }} /> তৈরিকৃত ইভেন্ট ({inspectedProfile.stats?.createdCount || 0})
+                  </button>
+                  <button
+                    onClick={() => setProfileModalTab("governance")}
+                    className={`btn ${profileModalTab === "governance" ? "btn-primary" : "btn-ghost"}`}
+                    style={{ padding: "6px 14px", fontSize: "0.78rem" }}
+                  >
+                    <ShieldCheck size={14} style={{ marginRight: 5 }} /> রোল ও পয়েন্ট নিয়ন্ত্রণ
+                  </button>
+                </div>
+
+                {/* Modal Tab Content */}
+                <div style={{ flex: 1, overflowY: "auto", minHeight: 180, paddingRight: 4 }}>
+                  {profileModalTab === "bio" && (
+                    <div style={{ display: "grid", gap: 14 }}>
+                      <div>
+                        <h4 style={{ margin: "0 0 6px", fontSize: "0.88rem" }}>ব্যবহারকারীর বায়ো / পরিচিতি:</h4>
+                        <div
+                          style={{
+                            padding: "14px",
+                            borderRadius: 10,
+                            background: "var(--bg)",
+                            border: "1px solid var(--line)",
+                            fontSize: "0.85rem",
+                            lineHeight: 1.6,
+                            color: inspectedProfile.user?.bio ? "var(--text)" : "var(--muted)",
+                            whiteSpace: "pre-wrap",
+                          }}
+                        >
+                          {inspectedProfile.user?.bio || "এই ব্যবহারকারী এখনও কোনো বায়ো যুক্ত করেননি।"}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 6 }}>
+                        <a
+                          href={`/dashboard/chat?user=${inspectedProfile.user?._id}`}
+                          className="btn btn-primary"
+                          style={{ padding: "8px 16px", fontSize: "0.8rem", textDecoration: "none" }}
+                        >
+                          <MessageSquare size={15} style={{ marginRight: 6 }} /> এই ব্যবহারকারীকে সরাসরি মেসেজ পাঠান
+                        </a>
+                        <span className="muted" style={{ fontSize: "0.75rem" }}>
+                          অ্যাকাউন্ট খোলার তারিখ: {new Date(inspectedProfile.user?.createdAt || Date.now()).toLocaleDateString("bn-BD")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {profileModalTab === "joined" && (
+                    <div>
+                      {inspectedProfile.registrations?.length === 0 ? (
+                        <p className="muted" style={{ textAlign: "center", padding: "30px 0" }}>
+                          এই ব্যবহারকারী এখনও কোনো কমিউনিটি ইভেন্টে রেজিস্ট্রেশন করেননি।
+                        </p>
+                      ) : (
+                        <div style={{ display: "grid", gap: 10 }}>
+                          {inspectedProfile.registrations.map((reg) => (
+                            <div
+                              key={reg._id}
+                              style={{
+                                padding: "12px 14px",
+                                borderRadius: 10,
+                                background: "var(--bg)",
+                                border: "1px solid var(--line)",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                gap: 12,
+                              }}
+                            >
+                              <div>
+                                <b style={{ fontSize: "0.84rem", display: "block" }}>
+                                  {reg.eventId?.title || "Event deleted or archived"}
+                                </b>
+                                <small className="muted" style={{ fontSize: "0.7rem" }}>
+                                  {reg.eventId?.location || "Sylhet"} • {reg.eventId?.date ? new Date(reg.eventId.date).toLocaleDateString() : ""}
+                                </small>
+                              </div>
+                              <span className="status-pill status-green" style={{ fontSize: "0.64rem" }}>
+                                {reg.status || "confirmed"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {profileModalTab === "created" && (
+                    <div>
+                      {inspectedProfile.createdEvents?.length === 0 ? (
+                        <p className="muted" style={{ textAlign: "center", padding: "30px 0" }}>
+                          এই ব্যবহারকারী কোনো ইভেন্ট আয়োজন করেননি।
+                        </p>
+                      ) : (
+                        <div style={{ display: "grid", gap: 10 }}>
+                          {inspectedProfile.createdEvents.map((ev) => (
+                            <div
+                              key={ev._id}
+                              style={{
+                                padding: "12px 14px",
+                                borderRadius: 10,
+                                background: "var(--bg)",
+                                border: "1px solid var(--line)",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                gap: 12,
+                              }}
+                            >
+                              <div>
+                                <b style={{ fontSize: "0.84rem", display: "block" }}>{ev.title}</b>
+                                <small className="muted" style={{ fontSize: "0.7rem" }}>
+                                  {ev.location} • {ev.category} • {ev.volunteersCount || 0} volunteers
+                                </small>
+                              </div>
+                              <a
+                                href={`/events/${ev._id}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn btn-ghost"
+                                style={{ padding: "4px 8px", fontSize: "0.7rem" }}
+                              >
+                                <ExternalLink size={12} /> দেখুন
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {profileModalTab === "governance" && (
+                    <form onSubmit={handleSaveUserGovernance} style={{ display: "grid", gap: 14 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, marginBottom: 5 }}>
+                            প্ল্যাটফর্ম রোল (Role)
+                          </label>
+                          <select
+                            value={govRole}
+                            onChange={(e) => setGovRole(e.target.value)}
+                            style={{ width: "100%", height: 42, padding: "0 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--text)", fontSize: "0.8rem" }}
+                          >
+                            <option value="user">Volunteer (ব্যবহারকারী)</option>
+                            <option value="organizer">Organizer (ইভেন্ট আয়োজক)</option>
+                            <option value="admin">Administrator (প্ল্যাটফর্ম অ্যাডমিন)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, marginBottom: 5 }}>
+                            পদবী / ডেসিগনেশন (Designation)
+                          </label>
+                          <input
+                            type="text"
+                            value={govDesignation}
+                            onChange={(e) => setGovDesignation(e.target.value)}
+                            placeholder="e.g. Senior Volunteer Coordinator"
+                            style={{ width: "100%", height: 42, padding: "0 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--text)", fontSize: "0.8rem" }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, marginBottom: 5 }}>
+                            ভলান্টিয়ার পয়েন্ট (Impact Points)
+                          </label>
+                          <input
+                            type="number"
+                            value={govPoints}
+                            onChange={(e) => setGovPoints(Number(e.target.value))}
+                            min={0}
+                            style={{ width: "100%", height: 42, padding: "0 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--text)", fontSize: "0.8rem" }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, marginBottom: 5 }}>
+                            স্বেচ্ছাসেবার ঘণ্টা (Hours Volunteered)
+                          </label>
+                          <input
+                            type="number"
+                            value={govHours}
+                            onChange={(e) => setGovHours(Number(e.target.value))}
+                            min={0}
+                            style={{ width: "100%", height: 42, padding: "0 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--text)", fontSize: "0.8rem" }}
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={savingGov}
+                        style={{ marginTop: 8, padding: "10px", fontWeight: 700 }}
+                      >
+                        {savingGov ? "সংরক্ষণ হচ্ছে..." : "পরিবর্তনগুলো সংরক্ষণ করুন"}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

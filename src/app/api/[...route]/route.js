@@ -505,6 +505,43 @@ export async function GET(request, { params }) {
       return NextResponse.json({ success: true, data: users });
     }
 
+    // 22.5. Admin: Single User Profile Inspector with Activity History
+    if (route[0] === "admin" && route[1] === "users" && route[2] && (route[3] === "profile" || route.length === 3)) {
+      const decoded = verifyToken(request);
+      if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+
+      const targetUserId = route[2];
+      let targetUser = null;
+      try {
+        targetUser = await User.findById(targetUserId).select("-password");
+      } catch (_) {}
+
+      if (!targetUser) {
+        return NextResponse.json({ message: "User not found" }, { status: 404 });
+      }
+
+      const [registrations, createdEvents, attendances] = await Promise.all([
+        Registration.find({ userId: targetUser._id }).populate("eventId").sort({ registeredAt: -1 }).limit(50),
+        Event.find({ creatorEmail: targetUser.email }).sort({ date: -1 }).limit(50),
+        Attendance.find({ userId: targetUser._id }).populate("eventId").sort({ checkedInAt: -1 }).limit(50),
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          user: targetUser,
+          registrations,
+          createdEvents,
+          attendances,
+          stats: {
+            joinedCount: registrations.length,
+            createdCount: createdEvents.length,
+            attendedCount: attendances.length,
+          }
+        }
+      });
+    }
+
     // 23. Admin Events
     if (path === "admin/events") {
       const decoded = verifyToken(request);
@@ -1063,7 +1100,7 @@ export async function PATCH(request, { params }) {
         user.location = location.trim();
       }
 
-      if (photoURL && typeof photoURL === "string") {
+      if (typeof photoURL === "string") {
         user.photoURL = photoURL.trim();
       }
 
@@ -1108,12 +1145,22 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ success: true, data: updated });
     }
 
-    // 3. Admin: Update user role
-    if (route[0] === "admin" && route[1] === "users" && route[3] === "role") {
+    // 3. Admin: Update user role / governance
+    if (route[0] === "admin" && route[1] === "users" && route[2]) {
       if (!decoded || decoded.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
       const userId = route[2];
-      const updated = await User.findByIdAndUpdate(userId, { role: body.role }, { new: true }).select("-password");
-      return NextResponse.json({ success: true, data: updated });
+
+      const updateData = {};
+      if (body.role) updateData.role = body.role;
+      if (body.designation) updateData.designation = body.designation;
+      if (typeof body.points === "number") updateData.points = body.points;
+      if (typeof body.hoursVolunteered === "number") updateData.hoursVolunteered = body.hoursVolunteered;
+      if (typeof body.phone === "string") updateData.phone = body.phone.trim();
+      if (typeof body.location === "string") updateData.location = body.location.trim();
+      if (typeof body.bio === "string") updateData.bio = body.bio.trim().slice(0, 500);
+
+      const updated = await User.findByIdAndUpdate(userId, updateData, { new: true }).select("-password");
+      return NextResponse.json({ success: true, message: "User updated successfully", data: updated });
     }
 
     // 4. Admin / Emergency: Verify emergency request

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HeartHandshake, ArrowUpRight, User, Mail, LockKeyhole, ImageIcon, Eye, EyeOff, ShieldCheck, CheckCircle2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { HeartHandshake, ArrowUpRight, User, Mail, LockKeyhole, ImageIcon, Eye, EyeOff, ShieldCheck, CheckCircle2, UploadCloud, Camera, Smartphone, Laptop, Trash2, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useSite } from "@/components/site-provider";
 import { validateRealEmail, validateRealName } from "@/lib/email-validator";
+import { processImageFile } from "@/lib/image-utils";
 import toast from "react-hot-toast";
 
 // Helper to ensure Google GIS script is safely and dynamically loaded
@@ -37,6 +38,29 @@ export default function Register() {
   const { lang, toggleLang, t } = useSite();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [photoURL, setPhotoURL] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingPhoto(true);
+    const toastId = toast.loading(lang === "bn" ? "ফোন/ল্যাপটপ থেকে ছবি প্রসেস করা হচ্ছে..." : "Processing photo...");
+    try {
+      const compressedDataUrl = await processImageFile(file, 400, 400, 0.85);
+      setPhotoURL(compressedDataUrl);
+      toast.success(lang === "bn" ? "প্রোফাইল ছবি সফলভাবে যুক্ত হয়েছে! 📷" : "Photo added successfully! 📷", { id: toastId });
+    } catch (err) {
+      toast.error(err.message || (lang === "bn" ? "ছবি আপলোডে ত্রুটি হয়েছে।" : "Failed to load photo."), { id: toastId });
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -52,7 +76,8 @@ export default function Register() {
     const name = form.fullname.value.trim();
     const email = form.email.value.trim();
     const password = form.password.value;
-    const photoURL = form.photoURL.value.trim();
+    const formPhotoInput = form.photoURLInput?.value?.trim() || "";
+    const finalPhotoURL = photoURL || formPhotoInput || "";
 
     if (!name || !email || !password) {
       toast.error(lang === "bn" ? "সবগুলো প্রয়োজনীয় ফিল্ড পূরণ করুন।" : "Please fill in all required fields.");
@@ -83,7 +108,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const res = await register(name, email, password, photoURL);
+      const res = await register(name, email, password, finalPhotoURL);
       toast.success(lang === "bn" ? `অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! স্বাগতম ${name} 🎉` : "Account created! Welcome to KindConnect 🎉");
       router.push("/dashboard");
     } catch (err) {
@@ -250,10 +275,133 @@ export default function Register() {
               🔒 {lang === "bn" ? "শুধুমাত্র আসল ও ভেরিফাইড @gmail.com বাধ্যতামূলক (ভুয়া ইমেইল ব্লক করা হবে)।" : "Only authentic @gmail.com accounts are accepted. Fake emails are blocked."}
             </small>
 
-            <label style={{ marginTop: 14 }}>{t("photoUrlLabel")}</label>
-            <div className="input-wrap">
-              <ImageIcon size={17} />
-              <input name="photoURL" placeholder="https://images.unsplash.com/photo-1534528741775-53994a69daeb"/>
+            {/* Native Mobile Gallery / Laptop Photo Upload */}
+            <div style={{ marginTop: 16, background: "rgba(0,0,0,0.03)", border: "1px solid var(--line)", borderRadius: 12, padding: "14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
+                <label style={{ fontSize: "0.82rem", fontWeight: 700, margin: 0 }}>
+                  {lang === "bn" ? "প্রোফাইল ছবি (মোবাইল গ্যালারি / ল্যাপটপ ফাইল)" : "Profile Photo (Gallery / Device Upload)"}
+                </label>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <span style={{ fontSize: "0.65rem", padding: "2px 6px", borderRadius: 4, background: "rgba(34, 197, 94, 0.12)", color: "var(--green)", fontWeight: 700 }}>
+                    গ্যালারি
+                  </span>
+                  <span style={{ fontSize: "0.65rem", padding: "2px 6px", borderRadius: 4, background: "rgba(59, 130, 246, 0.12)", color: "#3b82f6", fontWeight: 700 }}>
+                    ফাইল
+                  </span>
+                </div>
+              </div>
+
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleFileSelected}
+              />
+
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                {photoURL ? (
+                  <div style={{ position: "relative" }}>
+                    <img
+                      src={photoURL}
+                      alt="Selected preview"
+                      style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--green)" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoURL("")}
+                      style={{
+                        position: "absolute",
+                        top: -4,
+                        right: -4,
+                        width: 20,
+                        height: 20,
+                        borderRadius: "50%",
+                        background: "#ef4444",
+                        color: "#fff",
+                        border: "none",
+                        display: "grid",
+                        placeItems: "center",
+                        cursor: "pointer",
+                      }}
+                      title="ছবি মুছুন"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: "50%",
+                      background: "rgba(0,0,0,0.06)",
+                      border: "2px dashed var(--line)",
+                      display: "grid",
+                      placeItems: "center",
+                      color: "var(--muted)"
+                    }}
+                  >
+                    <Camera size={22} />
+                  </div>
+                )}
+
+                <div style={{ flex: 1, minWidth: 180 }}>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                    className="btn btn-outline"
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      fontSize: "0.8rem",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      borderRadius: 8
+                    }}
+                  >
+                    {uploadingPhoto ? (
+                      <>
+                        <Loader2 size={14} className="spin" />
+                        <span>{lang === "bn" ? "প্রসেস হচ্ছে..." : "Processing..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud size={15} />
+                        <span>{lang === "bn" ? "📷 ফোন গ্যালারি বা ল্যাপটপ থেকে ছবি নিন" : "📷 Pick from Gallery / Laptop"}</span>
+                      </>
+                    )}
+                  </button>
+                  <small className="muted" style={{ fontSize: "0.68rem", display: "block", marginTop: 4 }}>
+                    {photoURL ? (lang === "bn" ? "✓ ছবি যুক্ত হয়েছে!" : "✓ Photo selected!") : (lang === "bn" ? "ক্লিক করলেই ফোনের ফটো বা পিসির ফাইল সিলেক্ট হবে" : "Tap to open mobile camera/gallery or PC files")}
+                  </small>
+                </div>
+              </div>
+
+              {/* Optional Web Link Input Fallback */}
+              {!photoURL && (
+                <div style={{ marginTop: 10, position: "relative" }}>
+                  <ImageIcon size={15} color="var(--muted)" style={{ position: "absolute", left: 10, top: 10 }} />
+                  <input
+                    name="photoURLInput"
+                    placeholder={lang === "bn" ? "অথবা ছবির অনলাইন লিংক (ঐচ্ছিক)" : "Or online image URL (optional)"}
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px 8px 32px",
+                      fontSize: "0.78rem",
+                      borderRadius: 8,
+                      border: "1px solid var(--line)",
+                      background: "var(--bg)",
+                      color: "var(--text)",
+                      outline: "none"
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <label style={{ marginTop: 14 }}>{t("passwordLabel")} *</label>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   User, 
   Mail, 
@@ -20,11 +20,17 @@ import {
   ArrowLeft,
   Heart,
   Eye,
-  EyeOff
+  EyeOff,
+  UploadCloud,
+  Smartphone,
+  Laptop,
+  Trash2,
+  Loader2
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { useSite } from "@/components/site-provider";
 import { api } from "@/lib/api";
+import { processImageFile } from "@/lib/image-utils";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -44,6 +50,10 @@ export default function ProfilePage() {
 
   const [saving, setSaving] = useState(false);
   const [joinedCount, setJoinedCount] = useState(0);
+
+  // Gallery / Device Photo Upload State
+  const fileInputRef = useRef(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Profile Form States
   const [name, setName] = useState("");
@@ -79,6 +89,37 @@ export default function ProfilePage() {
 
   const isAdmin = user?.role === "admin";
   const initials = user?.name ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U";
+
+  // Handle photo upload from phone gallery or laptop file picker
+  const handleFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingPhoto(true);
+    const toastId = toast.loading(lang === "bn" ? "ফোন/ল্যাপটপ থেকে ছবি প্রসেস করা হচ্ছে..." : "Processing image from device...");
+    try {
+      const compressedDataUrl = await processImageFile(file, 400, 400, 0.85);
+      setPhotoURL(compressedDataUrl);
+      toast.success(
+        lang === "bn" 
+          ? "ছবি সফলভাবে যুক্ত হয়েছে! নিচের 'পরিবর্তন সংরক্ষণ করুন' বাটনে ক্লিক করে সেভ করুন।" 
+          : "Photo loaded! Click 'Save Changes' to update your profile.",
+        { id: toastId }
+      );
+    } catch (err) {
+      toast.error(err.message || (lang === "bn" ? "ছবি আপলোডে ত্রুটি হয়েছে।" : "Failed to load photo."), { id: toastId });
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoURL("");
+    toast.success(lang === "bn" ? "ছবি সরানো হয়েছে। 'পরিবর্তন সংরক্ষণ করুন' বাটনে ক্লিক করুন।" : "Photo cleared.");
+  };
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -159,52 +200,71 @@ export default function ProfilePage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 24 }}>
-          {/* Avatar with Live Preview */}
+          {/* Avatar with Live Preview & Direct Device Upload Trigger */}
           <div style={{ position: "relative" }}>
-            {photoURL ? (
-              <img
-                src={photoURL}
-                alt={name || "User Avatar"}
-                style={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  border: "3px solid var(--green)",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
-                }}
-              />
-            ) : (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                position: "relative",
+                display: "inline-block",
+                cursor: "pointer",
+                borderRadius: "50%",
+              }}
+              title={lang === "bn" ? "ফোন বা ল্যাপটপ থেকে ছবি নির্বাচন করতে ক্লিক করুন" : "Click to select a photo from your phone or laptop"}
+            >
+              {photoURL ? (
+                <img
+                  src={photoURL}
+                  alt={name || "User Avatar"}
+                  style={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    border: "3px solid var(--green)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: "50%",
+                    background: "rgba(34, 197, 94, 0.2)",
+                    color: "var(--green)",
+                    display: "grid",
+                    placeItems: "center",
+                    fontSize: "2rem",
+                    fontWeight: 800,
+                    border: "3px solid var(--green)",
+                  }}
+                >
+                  {initials}
+                </div>
+              )}
+              {/* Camera Action Badge */}
               <div
                 style={{
-                  width: 96,
-                  height: 96,
+                  position: "absolute",
+                  bottom: -2,
+                  right: -2,
+                  width: 32,
+                  height: 32,
                   borderRadius: "50%",
-                  background: "rgba(34, 197, 94, 0.2)",
-                  color: "var(--green)",
+                  background: "var(--green)",
+                  color: "#0a1f11",
+                  border: "2.5px solid var(--panel)",
                   display: "grid",
                   placeItems: "center",
-                  fontSize: "2rem",
-                  fontWeight: 800,
-                  border: "3px solid var(--green)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
+                  transition: "transform 0.15s ease",
                 }}
+                title={lang === "bn" ? "ফোন গ্যালারি বা কম্পিউটার থেকে ছবি আপলোড করুন" : "Upload photo"}
               >
-                {initials}
+                {uploadingPhoto ? <Loader2 size={16} className="spin" /> : <Camera size={16} />}
               </div>
-            )}
-            <span
-              style={{
-                position: "absolute",
-                bottom: 4,
-                right: 4,
-                width: 18,
-                height: 18,
-                borderRadius: "50%",
-                background: "var(--green)",
-                border: "3px solid var(--panel)",
-              }}
-              title="Active Profile"
-            />
+            </div>
           </div>
 
           {/* User Identity Details */}
@@ -433,37 +493,135 @@ export default function ProfilePage() {
               />
             </div>
 
-            {/* Row 4: Profile Picture URL & Preset Avatars */}
-            <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, marginBottom: 6 }}>
-                {lang === "bn" ? "প্রোফাইল ছবির লিংক (Profile Picture URL)" : "Profile Picture Image Link"}
-              </label>
-              <div style={{ position: "relative" }}>
-                <Camera size={16} color="var(--muted)" style={{ position: "absolute", left: 14, top: 14 }} />
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={photoURL}
-                  onChange={e => setPhotoURL(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "11px 14px 11px 40px",
-                    borderRadius: 10,
-                    border: "1px solid var(--line)",
-                    background: "var(--bg)",
-                    color: "var(--text)",
-                    fontSize: "15px",
-                    outline: "none"
-                  }}
-                />
+            {/* Row 4: Phone Gallery & Laptop Photo Upload + URL / Presets */}
+            <div style={{ background: "rgba(0,0,0,0.03)", border: "1px solid var(--line)", borderRadius: 14, padding: "18px 16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 800, color: "var(--text)", margin: 0 }}>
+                    {lang === "bn" ? "প্রোফাইল ছবি (ফোন গ্যালারি বা ল্যাপটপ থেকে)" : "Profile Picture (Mobile Gallery & Laptop Upload)"}
+                  </label>
+                  <small className="muted" style={{ fontSize: "0.72rem" }}>
+                    {lang === "bn" 
+                      ? "আপনার মোবাইল ফোনের গ্যালারি অথবা ল্যাপটপ/পিসি ফাইল ম্যানেজার থেকে ছবি নির্বাচন করুন।" 
+                      : "Choose a photo from your phone's photo library or laptop files."}
+                  </small>
+                </div>
+
+                <div style={{ display: "flex", gap: 6 }}>
+                  <span style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, background: "rgba(34, 197, 94, 0.12)", color: "var(--green)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <Smartphone size={13} /> মোবাইল গ্যালারি
+                  </span>
+                  <span style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, background: "rgba(59, 130, 246, 0.12)", color: "#3b82f6", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <Laptop size={13} /> ল্যাপটপ ফাইল
+                  </span>
+                </div>
               </div>
 
-              {/* Quick Select Presets */}
-              <div style={{ marginTop: 10 }}>
+              {/* Hidden File Input for Native File System / Camera / Gallery */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleFileSelected}
+              />
+
+              {/* Upload Trigger CTA Card */}
+              <div
+                style={{
+                  border: "2px dashed var(--line)",
+                  borderRadius: 12,
+                  padding: "16px",
+                  textAlign: "center",
+                  background: "var(--bg)",
+                  marginBottom: 16,
+                  transition: "all 0.2s ease"
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  className="btn btn-primary"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontWeight: 700,
+                    fontSize: "0.88rem",
+                    padding: "10px 22px",
+                    borderRadius: 10,
+                    boxShadow: "0 4px 14px rgba(34, 197, 94, 0.25)",
+                    cursor: uploadingPhoto ? "not-allowed" : "pointer"
+                  }}
+                >
+                  {uploadingPhoto ? (
+                    <>
+                      <Loader2 size={18} className="spin" />
+                      <span>{lang === "bn" ? "ছবি প্রস্তুত হচ্ছে..." : "Processing Photo..."}</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud size={18} />
+                      <span>{lang === "bn" ? "📷 ফোন গ্যালারি বা ল্যাপটপ থেকে ছবি দিন" : "📷 Select Photo from Gallery / Laptop"}</span>
+                    </>
+                  )}
+                </button>
+
+                <p className="muted" style={{ fontSize: "0.72rem", margin: "8px 0 0 0" }}>
+                  {lang === "bn"
+                    ? "সাপোর্টেড ফরম্যাট: JPG, PNG, WEBP (ক্লিক করলেই ফোনের ফটো গ্যালারি বা পিসির ফাইল ব্রাউজার ওপেন হবে)"
+                    : "Supported formats: JPG, PNG, WEBP (Native camera & photo gallery enabled)"}
+                </p>
+
+                {photoURL && (
+                  <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
+                    <img
+                      src={photoURL}
+                      alt="Selected preview"
+                      style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--green)" }}
+                    />
+                    <span style={{ fontSize: "0.75rem", color: "var(--green)", fontWeight: 700 }}>
+                      ✓ {lang === "bn" ? "ছবি লোড হয়েছে (সংরক্ষণ করতে নিচের সেভ বাটনে চাপুন)" : "Photo ready to save"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="btn btn-ghost"
+                      style={{ fontSize: "0.72rem", color: "#ef4444", padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: 4 }}
+                    >
+                      <Trash2 size={13} /> {lang === "bn" ? "ছবি মুছুন" : "Remove"}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Optional: Direct Image URL or Curated Presets */}
+              <div style={{ borderTop: "1px dashed var(--line)", paddingTop: 12 }}>
                 <small className="muted" style={{ fontSize: "0.72rem", display: "block", marginBottom: 6 }}>
-                  {lang === "bn" ? "অথবা ১-ট্যাপে নিচের যেকোনো একটি অ্যাভাটার বেছে নিন:" : "Or select one of our curated volunteer avatars:"}
+                  {lang === "bn" ? "অথবা ছবির সরাসরি ওয়েব লিংক দিন বা ১-ট্যাপে অ্যাভাটার বেছে নিন:" : "Or use an external photo link or select a preset:"}
                 </small>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ position: "relative", marginBottom: 10 }}>
+                  <Camera size={15} color="var(--muted)" style={{ position: "absolute", left: 12, top: 11 }} />
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/photo-..."
+                    value={photoURL}
+                    onChange={e => setPhotoURL(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "9px 12px 9px 36px",
+                      borderRadius: 8,
+                      border: "1px solid var(--line)",
+                      background: "var(--bg)",
+                      color: "var(--text)",
+                      fontSize: "13px",
+                      outline: "none"
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   {AVATAR_PRESETS.map((preset, idx) => (
                     <img
                       key={idx}
@@ -471,13 +629,13 @@ export default function ProfilePage() {
                       alt="Preset avatar"
                       onClick={() => setPhotoURL(preset)}
                       style={{
-                        width: 44,
-                        height: 44,
+                        width: 38,
+                        height: 38,
                         borderRadius: "50%",
                         objectFit: "cover",
                         cursor: "pointer",
-                        border: photoURL === preset ? "3px solid var(--green)" : "2px solid var(--line)",
-                        transform: photoURL === preset ? "scale(1.1)" : "scale(1)",
+                        border: photoURL === preset ? "2.5px solid var(--green)" : "1.5px solid var(--line)",
+                        transform: photoURL === preset ? "scale(1.08)" : "scale(1)",
                         transition: "0.15s"
                       }}
                       title="Select this avatar"
