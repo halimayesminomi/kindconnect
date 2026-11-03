@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth-provider";
 import { useSite } from "@/components/site-provider";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
+import GoogleAuthModal from "@/components/google-auth-modal";
 
 export default function Register() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function Register() {
   const { lang, toggleLang, t } = useSite();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -180,7 +182,7 @@ export default function Register() {
           <button
             type="button"
             className="btn btn-outline btn-block"
-            onClick={handleGoogleAuth}
+            onClick={() => setShowGoogleModal(true)}
             disabled={loading}
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontWeight: 600 }}
           >
@@ -271,5 +273,6 @@ export default function Register() {
         </div>
       </div>
     </div>
+    <GoogleAuthModal isOpen={showGoogleModal} onClose={() => setShowGoogleModal(false)} />
   </main>;
 }
