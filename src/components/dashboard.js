@@ -2,19 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, CalendarDays, ChevronDown, CircleHelp, ClipboardList, FileBadge, LayoutDashboard, LogOut, Menu, X, HeartHandshake, Plus, QrCode, Check, CheckCheck, ShieldCheck, MessageSquare } from "lucide-react";
+import { Bell, CalendarDays, ChevronDown, CircleHelp, ClipboardList, FileBadge, LayoutDashboard, LogOut, Menu, X, HeartHandshake, Plus, QrCode, ShieldCheck, MessageSquare, Sun, Moon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "./auth-provider";
+import { useSite } from "./site-provider";
 import { api } from "@/lib/api";
-
-const userLinks = [
-  { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Event & Admin Chat", href: "/dashboard/chat", icon: MessageSquare },
-  { label: "My events", href: "/dashboard/events", icon: ClipboardList },
-  { label: "Joined events", href: "/dashboard/joined", icon: CalendarDays },
-  { label: "QR Attendance", href: "/dashboard/attendance", icon: QrCode },
-  { label: "Certificates", href: "/dashboard/certificates", icon: FileBadge }
-];
 
 export function DashboardShell({ children, user }) {
   const pathname = usePathname();
@@ -25,20 +17,26 @@ export function DashboardShell({ children, user }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef(null);
   const { logout } = useAuth();
+  const { lang, setLang, theme, setTheme, t } = useSite();
 
   const displayName = user?.name || "User";
   const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
   const isAdmin = user?.role === "admin";
   const isOrganizer = user?.role === "organizer" || isAdmin;
   const role = isAdmin 
-    ? (user?.designation || "Platform Admin & Lead Builder")
+    ? (user?.designation || (lang === "bn" ? "প্ল্যাটফর্ম অ্যাডমিন ও লিড বিল্ডার" : "Platform Admin & Lead Builder"))
     : isOrganizer 
-      ? (user?.designation || "Lead Organizer & Platform Builder") 
-      : "Volunteer";
+      ? (user?.designation || (lang === "bn" ? "অর্গানাইজার" : "Organizer")) 
+      : (lang === "bn" ? "ভলান্টিয়ার" : "Volunteer");
 
   const navigationLinks = [
-    ...(isAdmin ? [{ label: "Admin Panel", href: "/admin", icon: ShieldCheck }] : []),
-    ...userLinks,
+    ...(isAdmin ? [{ label: t("adminPanel"), href: "/admin", icon: ShieldCheck }] : []),
+    { label: t("dashboard") || "Overview", href: "/dashboard", icon: LayoutDashboard },
+    { label: t("liveChat") || "Live Chat", href: "/dashboard/chat", icon: MessageSquare },
+    { label: t("myEvents") || "My events", href: "/dashboard/events", icon: ClipboardList },
+    { label: t("myJoined") || "Joined events", href: "/dashboard/joined", icon: CalendarDays },
+    { label: t("qrAttendance") || "QR Attendance", href: "/dashboard/attendance", icon: QrCode },
+    { label: t("certificates") || "Certificates", href: "/dashboard/certificates", icon: FileBadge }
   ];
 
   const fetchNotifs = () => {
@@ -90,34 +88,49 @@ export function DashboardShell({ children, user }) {
   return <div className="dashboard-layout">
     <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
       <div className="sidebar-top">
-        <Link href="/" className="brand"><span className="brand-mark"><HeartHandshake size={21}/></span><span>kind<span className="brand-accent">connect</span><small>YOUR IMPACT SPACE</small></span></Link>
+        <Link href="/" className="brand"><span className="brand-mark"><HeartHandshake size={21}/></span><span>kind<span className="brand-accent">connect</span><small>{lang === "bn" ? "আপনার প্রভাবের ক্ষেত্র" : "YOUR IMPACT SPACE"}</small></span></Link>
         <button className="icon-btn sidebar-close" onClick={() => setOpen(false)}><X/></button>
       </div>
-      <div className="workspace-label">WORKSPACE</div>
+      <div className="workspace-label">{t("workspace")}</div>
       <div className="side-links">
         {navigationLinks.map(({ label, href, icon: Icon }) => (
           <Link key={href} href={href} onClick={() => setOpen(false)} className={`side-link ${pathname === href ? "selected" : ""}`}><Icon size={18}/>{label}</Link>
         ))}
       </div>
       <div className="sidebar-bottom">
-        <div className="help-card"><CircleHelp size={19}/><b>Need a hand?</b><p>We're here to help you make an impact.</p><a href="mailto:hello@kindconnect.org">Get support ↗</a></div>
-        <button className="side-link" onClick={handleLogout} style={{width:"100%",border:"none",background:"transparent",textAlign:"left",cursor:"pointer"}}><LogOut size={18}/>Logout</button>
-        <Link href="/" className="side-link">Back to website</Link>
+        <div className="help-card"><CircleHelp size={19}/><b>{t("needHand")}</b><p>{t("needHandDesc")}</p><a href="mailto:hello@kindconnect.org">{t("getSupport")}</a></div>
+        <button className="side-link" onClick={handleLogout} style={{width:"100%",border:"none",background:"transparent",textAlign:"left",cursor:"pointer"}}><LogOut size={18}/>{t("logout")}</button>
+        <Link href="/" className="side-link">{t("backToWebsite")}</Link>
       </div>
     </aside>
     <main className="dashboard-main">
       <header className="dash-topbar">
         <button className="icon-btn dash-menu" onClick={() => setOpen(!open)}><Menu/></button>
-        <div className="breadcrumb">Workspace <span>/</span> <b>{role} dashboard</b></div>
+        <div className="breadcrumb">{t("workspace")} <span>/</span> <b>{role}</b></div>
         <div className="dash-top-actions">
-          <Link href="/dashboard/create-event" className="btn btn-primary" style={{padding:"8px 14px",fontSize:".78rem"}}><Plus size={15}/>New Event</Link>
+          {/* Language Toggle in Dashboard */}
+          <button 
+            className="icon-btn" 
+            title={lang === "en" ? "বাংলা ভাষায় দেখুন" : "Switch to English"} 
+            onClick={() => setLang(lang === "en" ? "bn" : "en")}
+            style={{ fontWeight: 800, fontSize: ".76rem", width: 44 }}
+          >
+            {lang === "en" ? "বাং" : "EN"}
+          </button>
+
+          {/* Theme Toggle in Dashboard */}
+          <button className="icon-btn" aria-label="Toggle theme" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}
+          </button>
+
+          <Link href="/dashboard/create-event" className="btn btn-primary" style={{padding:"8px 14px",fontSize:".78rem"}}><Plus size={15}/>{t("newEvent")}</Link>
           
           {/* Notification Menu */}
           <div style={{ position: "relative" }} ref={notifRef}>
             <button 
               className="icon-btn notification-btn" 
               onClick={() => setNotifOpen(!notifOpen)}
-              title="Notifications"
+              title={t("notifications")}
             >
               <Bell size={18}/>
               {unreadCount > 0 && <i style={{ background: "var(--green)", width: 8, height: 8, position: "absolute", top: 6, right: 6, borderRadius: "50%" }} />}
@@ -139,15 +152,15 @@ export function DashboardShell({ children, user }) {
                 zIndex: 100
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid var(--line)" }}>
-                  <b style={{ fontSize: "0.85rem" }}>Notifications {unreadCount > 0 && `(${unreadCount})`}</b>
+                  <b style={{ fontSize: "0.85rem" }}>{t("notifications")} {unreadCount > 0 && `(${unreadCount})`}</b>
                   {unreadCount > 0 && (
                     <button onClick={handleMarkAllRead} style={{ background: "transparent", border: "none", color: "var(--green)", fontSize: "0.72rem", cursor: "pointer", fontWeight: 700 }}>
-                      Mark all read
+                      {t("markAllRead")}
                     </button>
                   )}
                 </div>
                 {notifications.length === 0 ? (
-                  <p className="muted" style={{ fontSize: "0.78rem", textAlign: "center", padding: "20px 0" }}>No notifications yet</p>
+                  <p className="muted" style={{ fontSize: "0.78rem", textAlign: "center", padding: "20px 0" }}>{t("noNotifs")}</p>
                 ) : (
                   notifications.map(n => (
                     <div 

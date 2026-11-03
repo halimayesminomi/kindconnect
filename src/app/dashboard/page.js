@@ -4,11 +4,13 @@ import Link from "next/link";
 import { ArrowUpRight, CalendarDays, Clock3, Heart, Users, Plus, MapPin, ChevronRight } from "lucide-react";
 import { StatCard } from "@/components/cards";
 import { useAuth } from "@/components/auth-provider";
+import { useSite } from "@/components/site-provider";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { lang, t } = useSite();
   const [myEvents, setMyEvents] = useState([]);
   const [joinedEvents, setJoinedEvents] = useState([]);
 
@@ -19,8 +21,10 @@ export default function Dashboard() {
 
   const upcomingJoined = joinedEvents.filter(r => r.eventId && new Date(r.eventId.date) > new Date()).slice(0, 3);
   const now = new Date();
-  const greeting = now.getHours() < 12 ? "Good morning" : now.getHours() < 17 ? "Good afternoon" : "Good evening";
-  const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).toUpperCase();
+  const greeting = lang === "bn"
+    ? (now.getHours() < 12 ? "শুভ সকাল" : now.getHours() < 17 ? "শুভ দুপুর" : "শুভ সন্ধ্যা")
+    : (now.getHours() < 12 ? "Good morning" : now.getHours() < 17 ? "Good afternoon" : "Good evening");
+  const dateStr = now.toLocaleDateString(lang === "bn" ? "bn-BD" : "en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).toUpperCase();
   const isAdmin = user?.role === "admin";
   const isOrganizer = user?.role === "organizer" || isAdmin;
   const displayName = isOrganizer ? (user?.name || "Halima Yesmin Omi") : (user?.name?.split(" ")[0] || "there");
@@ -92,19 +96,19 @@ export default function Dashboard() {
       <div>
         <span className="eyebrow">{dateStr}</span>
         <h1>{greeting}, {displayName} <span>✳</span></h1>
-        <p className="muted">{isOrganizer ? "Welcome back, Lead Organizer. Manage community initiatives and platform events." : "Ready to make today meaningful?"}</p>
+        <p className="muted">{isOrganizer ? (lang === "bn" ? "আবার স্বাগতম, লিড অর্গানাইজার। আপনার কমিউনিটি উদ্যোগ পরিচালনা করুন।" : "Welcome back, Lead Organizer. Manage community initiatives and platform events.") : (lang === "bn" ? "আজকের দিনটিকে অর্থপূর্ণ করতে প্রস্তুত?" : "Ready to make today meaningful?")}</p>
       </div>
-      <Link href="/dashboard/create-event" className="btn btn-primary"><Plus size={17}/> Create event</Link>
+      <Link href="/dashboard/create-event" className="btn btn-primary"><Plus size={17}/> {lang === "bn" ? "ইভেন্ট তৈরি করুন" : "Create event"}</Link>
     </div>
     <div className="stats-grid">
-      <StatCard icon={Heart} label="Events created" value={myEvents.length} change={`${myEvents.filter(e => new Date(e.date) > new Date()).length} upcoming`}/>
-      <StatCard icon={CalendarDays} label="Events joined" value={joinedEvents.length} change={`${upcomingJoined.length} upcoming`}/>
-      <StatCard icon={Users} label="Total volunteers" value={myEvents.reduce((a, e) => a + (e.volunteersCount || 0), 0)} change="Across your events"/>
+      <StatCard icon={Heart} label={lang === "bn" ? "তৈরি করা ইভেন্ট" : "Events created"} value={myEvents.length} change={`${myEvents.filter(e => new Date(e.date) > new Date()).length} ${lang === "bn" ? "আসন্ন" : "upcoming"}`}/>
+      <StatCard icon={CalendarDays} label={lang === "bn" ? "যুক্ত হওয়া ইভেন্ট" : "Events joined"} value={joinedEvents.length} change={`${upcomingJoined.length} ${lang === "bn" ? "আসন্ন" : "upcoming"}`}/>
+      <StatCard icon={Users} label={lang === "bn" ? "মোট ভলান্টিয়ার" : "Total volunteers"} value={myEvents.reduce((a, e) => a + (e.volunteersCount || 0), 0)} change={lang === "bn" ? "আপনার সকল ইভেন্টে" : "Across your events"}/>
       <StatCard 
         icon={Clock3} 
-        label={isOrganizer ? "Platform role" : "Volunteer role"} 
-        value={isOrganizer ? "Organizer & Builder" : (user?.role || "Volunteer")} 
-        change={isOrganizer ? "Core System Architect" : "Active member"}
+        label={isOrganizer ? (lang === "bn" ? "প্ল্যাটফর্ম ভূমিকা" : "Platform role") : (lang === "bn" ? "ভলান্টিয়ার ভূমিকা" : "Volunteer role")} 
+        value={isOrganizer ? (lang === "bn" ? "অর্গানাইজার ও বিল্ডার" : "Organizer & Builder") : (user?.role || "Volunteer")} 
+        change={isOrganizer ? (lang === "bn" ? "কোর সিস্টেম আর্কিটেক্ট" : "Core System Architect") : (lang === "bn" ? "সক্রিয় সদস্য" : "Active member")}
       />
     </div>
     <div className="dash-columns">

@@ -6,6 +6,7 @@ import { AlertTriangle, HeartHandshake, Phone, MapPin, Users, Plus, ShieldCheck,
 import { PublicLayout } from "@/components/site";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
+import { useSite } from "@/components/site-provider";
 import toast from "react-hot-toast";
 
 const INITIAL_REQUESTS = [
@@ -52,6 +53,7 @@ const INITIAL_REQUESTS = [
 
 export default function EmergencyPage() {
   const { user } = useAuth();
+  const { lang, t } = useSite();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterCat, setFilterCat] = useState("All");
@@ -133,10 +135,16 @@ export default function EmergencyPage() {
   return <PublicLayout><main className="container page-main">
     <div className="page-hero compact">
       <span className="eyebrow" style={{ color: "#ff6b6b" }}>
-        <Flame size={14} color="#ff6b6b" /> RAPID RESPONSE & RELIEF
+        <Flame size={14} color="#ff6b6b" /> {t("emergencyEyebrow")}
       </span>
-      <h1>Emergency Help &<br/><span className="gradient-text">Community Relief.</span></h1>
-      <p className="muted">Verified urgent community needs across Bangladesh. Lend a hand or coordinate local aid.</p>
+      <h1>
+        {lang === "bn" ? (
+          <>কমিউনিটি ইমার্জেন্সি <br/><span className="gradient-text">রিলিফ ও সাহায্য হাব।</span></>
+        ) : (
+          <>Emergency Help &<br/><span className="gradient-text">Community Relief.</span></>
+        )}
+      </h1>
+      <p className="muted">{t("emergencyDesc")}</p>
     </div>
 
     {/* Toolbar */}
@@ -144,13 +152,13 @@ export default function EmergencyPage() {
       <div className="category-tabs" style={{ margin: 0 }}>
         {categories.map(c => (
           <button key={c} onClick={() => setFilterCat(c)} className={filterCat === c ? "tab-active" : ""}>
-            {c}
+            {c === "All" ? t("catAll") : c}
           </button>
         ))}
       </div>
 
       <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ padding: "10px 18px", fontSize: ".82rem" }}>
-        <Plus size={16} /> Submit Relief Request
+        <Plus size={16} /> {t("postAppeal")}
       </button>
     </div>
 
@@ -213,14 +221,14 @@ export default function EmergencyPage() {
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
                 <span className="muted" style={{ fontSize: ".72rem", display: "flex", alignItems: "center", gap: 5 }}>
-                  <Users size={14} /> {req.volunteersJoined || 0} volunteers responding
+                  <Users size={14} /> {req.volunteersJoined || 0} {t("joinedSoFar")}
                 </span>
                 <button 
                   onClick={() => handleRespond(req._id, req.title)} 
                   className="btn btn-primary" 
                   style={{ padding: "8px 14px", fontSize: ".78rem" }}
                 >
-                  <Heart size={14} /> Respond & Help
+                  <Heart size={14} /> {t("joinRelief")}
                 </button>
               </div>
             </div>

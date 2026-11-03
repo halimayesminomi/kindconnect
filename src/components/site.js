@@ -328,6 +328,7 @@ export function Navbar() {
 }
 
 export function Footer() {
+  const { t, lang } = useSite();
   return (
     <footer className="footer">
       <div className="container footer-grid">
@@ -336,7 +337,7 @@ export function Footer() {
             <span className="brand-mark"><HeartHandshake size={22}/></span>
             <span>kind<span className="brand-accent">connect</span><small>CONNECT PEOPLE. CREATE IMPACT.</small></span>
           </Link>
-          <p className="muted footer-copy">Small actions. Stronger communities. A better tomorrow.</p>
+          <p className="muted footer-copy">{t("footerSlogan")}</p>
           <p className="muted" style={{ fontSize: ".72rem", marginTop: 8, lineHeight: 1.6 }}>
             <b>CSE 36 (EVE) Metropolitan University</b><br />
             Team: <b>Halima Yesmin Omi</b> (251-112-001) & <b>Shraboni Das</b> (251-112-006)<br />
@@ -344,26 +345,26 @@ export function Footer() {
           </p>
         </div>
         <div>
-          <b>Explore</b>
-          <Link href="/events">Events</Link>
-          <Link href="/impact">Our impact</Link>
-          <Link href="/leaderboard">Leaderboard</Link>
+          <b>{t("footerExplore")}</b>
+          <Link href="/events">{t("exploreEvents")}</Link>
+          <Link href="/impact">{t("ourImpact")}</Link>
+          <Link href="/leaderboard">{t("leaderboard")}</Link>
         </div>
         <div>
-          <b>Community</b>
-          <Link href="/about">About us</Link>
-          <Link href="/register">Become a volunteer</Link>
-          <Link href="/login">Sign in</Link>
+          <b>{t("footerCommunity")}</b>
+          <Link href="/about">{t("about")}</Link>
+          <Link href="/register">{t("joinCommunity")}</Link>
+          <Link href="/login">{t("login")}</Link>
         </div>
         <div>
-          <b>Get involved</b>
-          <p className="muted">Have an idea for your community?</p>
-          <Link className="text-link" href="/register">Start making impact <ArrowUpRight size={15}/></Link>
+          <b>{t("footerGetInvolved")}</b>
+          <p className="muted">{t("footerIdea")}</p>
+          <Link className="text-link" href="/register">{t("footerStart")} <ArrowUpRight size={15}/></Link>
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>© 2026 KindConnect. Creator : Halima Yesmin Omi</span>
-        <span>Made with purpose <span className="brand-accent">♥</span></span>
+        <span>{t("footerCopy")}</span>
+        <span>{t("footerPurpose")} <span className="brand-accent">♥</span></span>
       </div>
     </footer>
   );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Clock3, HeartHandshake, Sprout, Users, Shirt, BookOpen, Utensils, TreePine } from "lucide-react";
 import { PublicLayout } from "@/components/site";
+import { useSite } from "@/components/site-provider";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 import {
@@ -37,6 +38,7 @@ const categoryData = [
 ];
 
 export default function Impact() {
+  const { lang, t } = useSite();
   const [eventCount, setEventCount] = useState(0);
   const [totalVolunteers, setTotalVolunteers] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -51,17 +53,23 @@ export default function Impact() {
   }, []);
 
   const stats = [
-    { icon: Users, value: totalVolunteers > 0 ? `${totalVolunteers}+` : "2,400+", label: "People taking action" },
-    { icon: HeartHandshake, value: eventCount > 0 ? eventCount : "180", label: "Community events" },
-    { icon: Clock3, value: "12,500+", label: "Volunteer hours" },
-    { icon: Sprout, value: "32", label: "Partner communities" },
+    { icon: Users, value: totalVolunteers > 0 ? `${totalVolunteers}+` : "2,400+", label: lang === "bn" ? "অংশগ্রহণকারী মানুষ" : "People taking action" },
+    { icon: HeartHandshake, value: eventCount > 0 ? eventCount : "180", label: t("eventsLabel") },
+    { icon: Clock3, value: "12,500+", label: t("hoursLabel") },
+    { icon: Sprout, value: "32", label: t("communitiesLabel") },
   ];
 
   return <PublicLayout><main className="container page-main">
     <div className="page-hero">
-      <span className="eyebrow">THE DIFFERENCE WE MAKE</span>
-      <h1>Impact is better<br/><span className="gradient-text">when it is shared.</span></h1>
-      <p className="muted">Every hour given, every event supported, every connection made — it all adds up.</p>
+      <span className="eyebrow">{t("impactHeroEyebrow")}</span>
+      <h1>
+        {lang === "bn" ? (
+          <>আমাদের প্রভাব আরও বড় <br/><span className="gradient-text">যখন তা ভাগ করে নেওয়া হয়।</span></>
+        ) : (
+          <>Impact is better<br/><span className="gradient-text">when it is shared.</span></>
+        )}
+      </h1>
+      <p className="muted">{t("impactHeroDesc")}</p>
     </div>
 
     {/* Top Summary Stats */}

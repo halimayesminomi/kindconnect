@@ -22,6 +22,7 @@ import { PublicLayout } from "@/components/site";
 import { EventCard } from "@/components/cards";
 import { api } from "@/lib/api";
 import { FALLBACK_EVENTS } from "@/lib/fallbackData";
+import { useSite } from "@/components/site-provider";
 
 export const BANGLADESH_DIVISIONS = [
   {
@@ -179,6 +180,7 @@ export const BANGLADESH_DIVISIONS = [
 ];
 
 export default function EventsPage() {
+  const { lang, t } = useSite();
   const [events, setEvents] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -189,6 +191,16 @@ export default function EventsPage() {
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   const categories = ["All", "Environment", "Education", "Community", "Health", "Animals", "Emergency", "Other"];
+  const categoryLabels = {
+    All: t("catAll") || "All",
+    Environment: t("catEnvironment") || "Environment",
+    Education: t("catEducation") || "Education",
+    Community: t("catCommunity") || "Community",
+    Health: t("catHealth") || "Health",
+    Animals: t("catAnimals") || "Animals",
+    Emergency: t("catEmergency") || "Emergency",
+    Other: t("catOther") || "Other",
+  };
 
   useEffect(() => {
     api.getEvents()
@@ -246,10 +258,16 @@ export default function EventsPage() {
 
   return <PublicLayout><main className="page-main container">
     <div className="page-hero compact">
-      <span className="eyebrow">MAKE YOUR NEXT MOVE</span>
-      <h1>Find an opportunity<br/><span className="gradient-text">across Bangladesh.</span></h1>
+      <span className="eyebrow">{t("eventsEyebrow")}</span>
+      <h1>
+        {lang === "bn" ? (
+          <>সমগ্র বাংলাদেশে <br/><span className="gradient-text">স্বেচ্ছাসেবার সুযোগ।</span></>
+        ) : (
+          <>Find an opportunity<br/><span className="gradient-text">across Bangladesh.</span></>
+        )}
+      </h1>
       <p className="muted">
-        সিলেট, ঢাকাসহ বাংলাদেশের প্রতিটি বিভাগের সামাজিক ও মানবিক উদ্যোগ এক প্ল্যাটফর্মে।
+        {t("eventsDesc")}
       </p>
     </div>
 
@@ -259,7 +277,7 @@ export default function EventsPage() {
         <input 
           value={query} 
           onChange={e => setQuery(e.target.value)} 
-          placeholder="Search events by title, division or location (e.g. Sylhet, Dhaka, Zindabazar)..."
+          placeholder={t("searchPlaceholder")}
         />
       </div>
 
@@ -275,7 +293,7 @@ export default function EventsPage() {
               cursor: "pointer"
             }}
           >
-            <LayoutGrid size={15}/> Grid
+            <LayoutGrid size={15}/> {t("viewGrid")}
           </button>
           <button 
             onClick={() => setViewMode("map")}
@@ -286,7 +304,7 @@ export default function EventsPage() {
               cursor: "pointer"
             }}
           >
-            <MapIcon size={15}/> 🇧🇩 Bangladesh Map Explorer
+            <MapIcon size={15}/> {t("viewMap")}
           </button>
         </div>
       </div>
@@ -296,7 +314,7 @@ export default function EventsPage() {
     <div className="category-tabs">
       {categories.map(c => (
         <button key={c} onClick={() => setCategory(c)} className={category === c ? "tab-active" : ""}>
-          {c}
+          {categoryLabels[c] || c}
         </button>
       ))}
     </div>
@@ -310,12 +328,12 @@ export default function EventsPage() {
               <Sparkles size={18} />
             </span>
             <div>
-              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700 }}>AI Recommended For You</h3>
-              <p className="muted" style={{ margin: 0, fontSize: "0.78rem" }}>Personalized recommendations based on community service history, location, and cause affinity.</p>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700 }}>{t("aiSmartTitle")}</h3>
+              <p className="muted" style={{ margin: 0, fontSize: "0.78rem" }}>{t("aiSmartDesc")}</p>
             </div>
           </div>
           <span style={{ fontSize: "0.72rem", background: "var(--surface)", border: "1px solid var(--line)", padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
-            ⚡ Real-time Smart Match
+            {t("realtimeSmartMatch")}
           </span>
         </div>
 
@@ -341,7 +359,7 @@ export default function EventsPage() {
                   </p>
                 </div>
                 <Link href={`/events/${e._id}`} className="btn btn-outline" style={{ marginTop: 12, fontSize: "0.74rem", padding: "6px 10px", justifyContent: "center" }}>
-                  View Opportunity <ArrowUpRight size={13} />
+                  {t("viewOpportunity")} <ArrowUpRight size={13} />
                 </Link>
               </div>
             </div>
@@ -351,15 +369,15 @@ export default function EventsPage() {
     )}
 
     <div className="results-line">
-      <span>{loading ? "Loading..." : `${filtered.length} opportunities found`}</span>
+      <span>{loading ? "Loading..." : `${filtered.length} ${t("opportunitiesFound")}`}</span>
       <span>
-        <MapPin size={14}/> {selectedLocation ? `Filtered by ${selectedLocation}` : selectedDivision === "all" ? "Across All Bangladesh" : `In ${activeDivision.name} (${activeDivision.nameBn})`}
+        <MapPin size={14}/> {selectedLocation ? `${t("filteredBy")} ${selectedLocation}` : selectedDivision === "all" ? t("acrossAllBangladesh") : `In ${activeDivision.name} (${activeDivision.nameBn})`}
         {(selectedLocation || selectedDivision !== "all") && (
           <button 
             onClick={() => { setSelectedLocation(null); setSelectedDivision("all"); }} 
             style={{ marginLeft: 8, background: "transparent", border: "none", color: "var(--green)", cursor: "pointer", fontSize: ".72rem", textDecoration: "underline" }}
           >
-            Reset to All Bangladesh
+            {t("resetAllBangladesh")}
           </button>
         )}
       </span>
@@ -608,8 +626,8 @@ export default function EventsPage() {
       ) : (
         <div className="empty-state">
           <Search size={28}/>
-          <h3>No events found</h3>
-          <p>Try a different keyword, category, or location filter.</p>
+          <h3>{t("noEventsFound")}</h3>
+          <p>{t("noEventsDesc")}</p>
         </div>
       )
     )}

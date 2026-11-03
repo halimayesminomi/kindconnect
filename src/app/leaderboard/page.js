@@ -4,6 +4,7 @@ import { Crown, Medal, Trophy, Sparkles, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { PublicLayout } from "@/components/site";
 import { useAuth } from "@/components/auth-provider";
+import { useSite } from "@/components/site-provider";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 
@@ -18,6 +19,7 @@ const initialLeaders = [
 
 export default function Leaderboard() {
   const { user } = useAuth();
+  const { lang, t } = useSite();
   const [myPoints, setMyPoints] = useState(0);
 
   useEffect(() => {
@@ -30,23 +32,33 @@ export default function Leaderboard() {
 
   return <PublicLayout><main className="container page-main">
     <div className="page-hero compact">
-      <span className="eyebrow">CELEBRATING CHANGEMAKERS</span>
-      <h1>Kindness looks good<br/><span className="gradient-text">on everyone.</span></h1>
-      <p className="muted">Meet the people dedicating their hours to positive social impact in Bangladesh.</p>
+      <span className="eyebrow">{t("leaderboardHeroEyebrow")}</span>
+      <h1>
+        {lang === "bn" ? (
+          <>শীর্ষ সমাজসেবক ও <br/><span className="gradient-text">ভলান্টিয়ার লিডারবোর্ড।</span></>
+        ) : (
+          <>Kindness looks good<br/><span className="gradient-text">on everyone.</span></>
+        )}
+      </h1>
+      <p className="muted">{t("leaderboardHeroDesc")}</p>
     </div>
 
     {/* User's Current Score Card if logged in */}
     {user && (
       <div style={{ maxWidth: 800, margin: "0 auto 24px", background: "rgba(183, 243, 107, 0.08)", border: "1px solid var(--green)", borderRadius: 16, padding: "18px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <span className="eyebrow" style={{ fontSize: ".64rem" }}>YOUR STANDING</span>
+          <span className="eyebrow" style={{ fontSize: ".64rem" }}>
+            {lang === "bn" ? "আপনার বর্তমান স্কোর" : "YOUR STANDING"}
+          </span>
           <h3 style={{ margin: "4px 0" }}>{user.name}</h3>
-          <p className="muted" style={{ fontSize: ".76rem", margin: 0 }}>Verified community check-in score</p>
+          <p className="muted" style={{ fontSize: ".76rem", margin: 0 }}>
+            {lang === "bn" ? "কিউআর স্ক্যান দ্বারা ভেরিফায়েড মোট অর্জিত পয়েন্ট" : "Verified community check-in score"}
+          </p>
         </div>
         <div style={{ textAlign: "right" }}>
-          <b style={{ fontSize: "1.6rem", color: "var(--green)", display: "block" }}>{myPoints} pts</b>
+          <b style={{ fontSize: "1.6rem", color: "var(--green)", display: "block" }}>{myPoints} {lang === "bn" ? "পয়েন্ট" : "pts"}</b>
           <Link href="/dashboard/attendance" className="text-link" style={{ fontSize: ".72rem" }}>
-            Check in to earn more <ArrowUpRight size={13} />
+            {lang === "bn" ? "পয়েন্ট বাড়াতে চেক-ইন করুন" : "Check in to earn more"} <ArrowUpRight size={13} />
           </Link>
         </div>
       </div>
@@ -57,11 +69,11 @@ export default function Leaderboard() {
         <div>
           <Trophy/>
           <span>
-            <b>Community Leaderboard</b>
-            <small className="muted">Live points awarded via QR check-ins</small>
+            <b>{t("leaderboardHeroTitle")}</b>
+            <small className="muted">{lang === "bn" ? "লাইভ পয়েন্ট ও কিউআর ভেরিফায়েড হাজিরা" : "Live points awarded via QR check-ins"}</small>
           </span>
         </div>
-        <span className="period-pill">All time ⌄</span>
+        <span className="period-pill">{lang === "bn" ? "সর্বকালীন ⌄" : "All time ⌄"}</span>
       </div>
 
       {initialLeaders.map((p, i) => (
