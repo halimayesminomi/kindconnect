@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HeartHandshake, ArrowUpRight, User, Mail, LockKeyhole, ImageIcon, Eye, EyeOff, ShieldCheck, CheckCircle2, UploadCloud, Camera, Smartphone, Laptop, Trash2, Loader2 } from "lucide-react";
+import { HeartHandshake, ArrowUpRight, User, Mail, Phone, LockKeyhole, ImageIcon, Eye, EyeOff, ShieldCheck, CheckCircle2, UploadCloud, Camera, Smartphone, Laptop, Trash2, Loader2, Sparkles } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useSite } from "@/components/site-provider";
@@ -38,6 +38,7 @@ export default function Register() {
   const { lang, toggleLang, t } = useSite();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [phone, setPhone] = useState("");
   const [photoURL, setPhotoURL] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef(null);
@@ -106,15 +107,73 @@ export default function Register() {
       return;
     }
 
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "195070843145-52dp2o0qmpj4gch9rdc4k9k0un7do7nu.apps.googleusercontent.com";
+
     setLoading(true);
+    toast.loading(lang === "bn" ? "🔒 আসল Gmail নিশ্চিত করতে গুগল পপ-আপ ওপেন হচ্ছে..." : "Opening Google verification popup...", { id: "google-auth" });
+
     try {
-      const res = await register(name, email, password, finalPhotoURL);
-      toast.success(lang === "bn" ? `অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! স্বাগতম ${name} 🎉` : "Account created! Welcome to KindConnect 🎉");
-      router.push("/dashboard");
+      const google = await ensureGoogleClient();
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: googleClientId,
+        scope: "email profile openid",
+        prompt: "select_account",
+        hint: email,
+        callback: async (tokenRes) => {
+          if (tokenRes.error) {
+            setLoading(false);
+            toast.dismiss("google-auth");
+            if (tokenRes.error === "popup_closed_by_user") {
+              toast.error(lang === "bn" ? "গুগল সাইন-ইন বাতিল করা হয়েছে। আসল জিমেইল নিশ্চিত না করে কোনো অ্যাকাউন্ট তৈরি করা যাবে না।" : "Google verification cancelled. Genuine Gmail required.");
+            } else {
+              toast.error(lang === "bn" ? "গুগল অথেন্টিকেশন ত্রুটি: " + tokenRes.error : "Google Auth Error: " + tokenRes.error);
+            }
+            return;
+          }
+
+          try {
+            // Retrieve verified profile directly from Google servers
+            const googleProfileRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+              headers: { Authorization: `Bearer ${tokenRes.access_token}` },
+            });
+            const googleProfile = await googleProfileRes.json();
+            if (!googleProfile.email) {
+              throw new Error(lang === "bn" ? "গুগল থেকে আসল ইমেইল তথ্য পাওয়া যায়নি।" : "No verified email returned from Google.");
+            }
+
+            const cleanGoogleEmail = googleProfile.email.toLowerCase().trim();
+            const emailCheck = validateRealEmail(cleanGoogleEmail, { requireGmail: true });
+            if (!emailCheck.isValid) {
+              throw new Error(emailCheck.errorBn || emailCheck.error);
+            }
+
+            // Register through backend with Google verified access token
+            await register({
+              name: name.trim() || googleProfile.name,
+              email: cleanGoogleEmail,
+              password: password,
+              phone: phone.trim(),
+              photoURL: finalPhotoURL || googleProfile.picture || "",
+              googleToken: tokenRes.access_token,
+            });
+
+            toast.dismiss("google-auth");
+            toast.success(lang === "bn" ? `আসল Gmail (${cleanGoogleEmail}) দিয়ে অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! স্বাগতম ${name} 🎉` : "Account created with genuine Gmail! Welcome 🎉");
+            router.push("/dashboard");
+          } catch (err) {
+            toast.dismiss("google-auth");
+            toast.error(err.message || "Registration failed. Please try again.");
+          } finally {
+            setLoading(false);
+          }
+        },
+      });
+
+      client.requestAccessToken({ prompt: "select_account", hint: email });
     } catch (err) {
-      toast.error(err.message || "Registration failed. Please try again.");
-    } finally {
       setLoading(false);
+      toast.dismiss("google-auth");
+      toast.error(lang === "bn" ? "গুগল সার্ভিস চালু করতে সমস্যা: " + err.message : "Google service error: " + err.message);
     }
   };
 
@@ -404,6 +463,18 @@ export default function Register() {
               )}
             </div>
 
+            <label style={{ marginTop: 14 }}>{lang === "bn" ? "মোবাইল ফোন নম্বর (Contact Phone - ঐচ্ছিক)" : "Contact Phone (Optional)"}</label>
+            <div className="input-wrap">
+              <Phone size={17} />
+              <input
+                name="phone"
+                type="tel"
+                placeholder="+880 1712-345678"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+              />
+            </div>
+
             <label style={{ marginTop: 14 }}>{t("passwordLabel")} *</label>
             <div className="input-wrap" style={{ position: "relative" }}>
               <LockKeyhole size={17} />
@@ -439,10 +510,41 @@ export default function Register() {
               <input name="terms" type="checkbox" required/> {t("agreeTerms")}
             </label>
 
-            <button className="btn btn-primary btn-block" type="submit" disabled={loading} style={{ marginTop: 16 }}>
-              {loading ? (lang === "bn" ? "অ্যাকাউন্ট তৈরি হচ্ছে..." : "Creating account...") : (lang === "bn" ? "আসল Gmail দিয়ে অ্যাকাউন্ট তৈরি করুন" : t("signUpAction"))}
-              {!loading && <ArrowUpRight size={17}/>}
+            <button 
+              className="btn btn-primary btn-block" 
+              type="submit" 
+              disabled={loading} 
+              style={{ 
+                marginTop: 18, 
+                padding: "13px 18px", 
+                fontWeight: 700, 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center", 
+                gap: 10,
+                boxShadow: "0 4px 16px rgba(34, 197, 94, 0.3)"
+              }}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={18} className="spin" />
+                  <span>{lang === "bn" ? "গুগলে ভেরিফাই হচ্ছে..." : "Verifying with Google..."}</span>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck size={18} />
+                  <span>{lang === "bn" ? "🔒 আসল Gmail ভেরিফাই করে অ্যাকাউন্ট তৈরি করুন" : "Verify Real Gmail & Sign Up"}</span>
+                  <ArrowUpRight size={17}/>
+                </>
+              )}
             </button>
+            <div style={{ textAlign: "center", marginTop: 8 }}>
+              <small className="muted" style={{ fontSize: "0.72rem", color: "var(--green)", fontWeight: 600, display: "block" }}>
+                {lang === "bn" 
+                  ? "🛡️ ক্লিক করলে গুগল পপ-আপ ওপেন হবে। শুধুমাত্র আপনার আসল গুগল অ্যাকাউন্টের ভেরিফিকেশন পাওয়ার পরেই অ্যাকাউন্ট তৈরি হবে (কোনো প্রকার ফেক বা ডামি ইমেইল গ্রহণযোগ্য নয়)।" 
+                  : "🛡️ Official Google verification popup ensures only real, authenticated Gmail accounts are registered."}
+              </small>
+            </div>
 
             <p className="auth-switch" style={{ marginTop: 20 }}>
               {t("alreadyMember")} <Link href="/login">{t("signInAction")}</Link>

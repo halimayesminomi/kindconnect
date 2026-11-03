@@ -584,9 +584,9 @@ export async function POST(request, { params }) {
     await connectDB();
     const body = await request.json().catch(() => ({}));
 
-    // 1. Auth: Register
+    // 1. Auth: Register (Requires Genuine Google OAuth Verification)
     if (path === "auth/register") {
-      const { name, email, password, photoURL } = body;
+      const { name, email, password, photoURL, phone, googleToken } = body;
       if (!name || !email || !password) {
         return NextResponse.json({ message: "Name, email, and password are required" }, { status: 400 });
       }
@@ -611,6 +611,41 @@ export async function POST(request, { params }) {
         }, { status: 400 });
       }
 
+      // Enforce Real Google OAuth Verification (Cannot register with unverified or fake Gmail)
+      if (!googleToken) {
+        return NextResponse.json({
+          message: "আসল জিমেইল ভেরিফিকেশন ছাড়া কোনো অ্যাকাউন্ট তৈরি করা যাবে না। গুগল পপ-আপের মাধ্যমে আপনার আসল জিমেইল নিশ্চিত করুন।",
+          errorEn: "Google OAuth verification required. Fake emails cannot create an account."
+        }, { status: 400 });
+      }
+
+      try {
+        const googleVerifyRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${googleToken}` },
+        });
+
+        if (!googleVerifyRes.ok) {
+          return NextResponse.json({
+            message: "গুগল অথেন্টিকেশন টোকেনটি সঠিক বা সক্রিয় নয়। অনুগ্রহ করে পুনরায় চেষ্টা করুন।",
+            errorEn: "Invalid or expired Google OAuth token."
+          }, { status: 401 });
+        }
+
+        const googleProfile = await googleVerifyRes.json();
+        if (!googleProfile.email || googleProfile.email.toLowerCase().trim() !== cleanEmail) {
+          return NextResponse.json({
+            message: "গুগল দ্বারা ভেরিফাইড আসল জিমেইলের সাথে প্রদত্ত ইমেইলের মিল নেই। শুধুমাত্র যাচাইকৃত আসল জিমেইল দিয়ে অ্যাকাউন্ট তৈরি করা যাবে।",
+            errorEn: "Provided email does not match verified Google account."
+          }, { status: 400 });
+        }
+      } catch (tokenErr) {
+        console.error("Google Token Verification Error:", tokenErr);
+        return NextResponse.json({
+          message: "গুগল ভেরিফিকেশন সার্ভারের সাথে সংযোগ করা যায়নি। ইন্টারনেট কানেকশন চেক করে আবার চেষ্টা করুন।",
+          errorEn: "Could not reach Google verification service."
+        }, { status: 500 });
+      }
+
       const existingUser = await User.findOne({ email: cleanEmail });
       if (existingUser) {
         return NextResponse.json({ message: "An account with this email already exists" }, { status: 400 });
@@ -624,10 +659,11 @@ export async function POST(request, { params }) {
         username: cleanEmail.split("@")[0],
         email: cleanEmail,
         password: hashedPassword,
+        phone: typeof phone === "string" ? phone.trim() : "",
         photoURL: photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
         role: "user",
         designation: "Active Volunteer",
-        points: 100,
+        points: 150,
         hoursVolunteered: 2,
       });
 
@@ -720,12 +756,15 @@ export async function POST(request, { params }) {
       let user = await User.findOne({ email: cleanEmail });
 
       if (!user) {
-        const dummyPassword = await bcrypt.hash(`google_${Date.now()}_kc`, 10);
+        const dummyPassword = userInfo.password 
+          ? await bcrypt.hash(userInfo.password, 10) 
+          : await bcrypt.hash(`google_${Date.now()}_kc`, 10);
         user = await User.create({
           name: userInfo.name || cleanEmail.split("@")[0],
           username: cleanEmail.split("@")[0],
           email: cleanEmail,
           password: dummyPassword,
+          phone: userInfo.phone ? userInfo.phone.trim() : "",
           photoURL: userInfo.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
           role: "user",
           designation: "Active Volunteer",

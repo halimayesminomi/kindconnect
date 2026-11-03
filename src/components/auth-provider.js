@@ -45,8 +45,14 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const register = async (name, email, password, photoURL) => {
-    const data = await api.register({ name, email, password, photoURL });
+  const register = async (nameOrPayload, email, password, photoURL, googleToken) => {
+    let payload = {};
+    if (typeof nameOrPayload === "object" && nameOrPayload !== null) {
+      payload = nameOrPayload;
+    } else {
+      payload = { name: nameOrPayload, email, password, photoURL, googleToken };
+    }
+    const data = await api.register(payload);
     localStorage.setItem("kindconnect_token", data.token);
     localStorage.removeItem("kindconnect_demo_user");
     setUser(data.user);
