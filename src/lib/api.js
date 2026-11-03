@@ -1,6 +1,8 @@
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL !== "http://localhost:5000/api")
-  ? process.env.NEXT_PUBLIC_API_URL
-  : (typeof window !== "undefined" ? "/api" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"));
+const API_BASE = typeof window !== "undefined"
+  ? "/api"
+  : (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost:5000")
+      ? process.env.NEXT_PUBLIC_API_URL
+      : "/api");
 
 async function request(endpoint, options = {}) {
   const token = typeof window !== "undefined" ? localStorage.getItem("kindconnect_token") : null;
