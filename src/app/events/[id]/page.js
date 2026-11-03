@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowUpRight, CalendarDays, Clock3, MapPin, Users, CheckCirc
 import { PublicLayout } from "@/components/site";
 import { useAuth } from "@/components/auth-provider";
 import { api } from "@/lib/api";
+import { FALLBACK_EVENTS } from "@/lib/fallbackData";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -64,7 +65,14 @@ export default function EventDetails() {
   useEffect(() => {
     api.getEvent(id)
       .then(res => setEvent(res.data))
-      .catch(() => router.push("/events"))
+      .catch(() => {
+        const found = FALLBACK_EVENTS.find(e => e._id === id || e.id === id);
+        if (found) {
+          setEvent(found);
+        } else {
+          router.push("/events");
+        }
+      })
       .finally(() => setLoading(false));
   }, [id]);
 

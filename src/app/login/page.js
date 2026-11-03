@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HeartHandshake, ArrowUpRight, Mail, LockKeyhole } from "lucide-react";
+import { HeartHandshake, ArrowUpRight, Mail, LockKeyhole, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import toast from "react-hot-toast";
 
 export default function Login() {
   const router = useRouter();
-  const { login, loginWithGoogle, user } = useAuth();
+  const { login, loginWithGoogle, loginAsDemo, user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -34,7 +35,12 @@ export default function Login() {
       toast.success("Welcome back! 🎉");
       router.push("/dashboard");
     } catch (err) {
-      toast.error(err.message || "Login failed. Please try again.");
+      const msg = err.message || "";
+      if (msg.includes("Failed to fetch") || msg.includes("network") || msg.includes("NetworkError")) {
+        toast.error("Backend server unreachable. The Express server is running on localhost or offline. Please check connection.");
+      } else {
+        toast.error(msg || "Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -131,11 +137,71 @@ export default function Login() {
           <label>Email address or Username</label>
           <div className="input-wrap"><Mail/><input name="email" type="text" placeholder="you@example.com or username (e.g. omi)" required autoCapitalize="none" autoCorrect="off"/></div>
           <label>Password</label>
-          <div className="input-wrap"><LockKeyhole/><input name="password" type="password" placeholder="Enter your password" required/></div>
+          <div className="input-wrap" style={{ position: "relative" }}>
+            <LockKeyhole size={17} />
+            <input 
+              name="password" 
+              type={showPassword ? "text" : "password"} 
+              placeholder="Enter your password" 
+              required
+              style={{ flex: 1, paddingRight: 32 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(prev => !prev)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              title={showPassword ? "Hide password" : "Show password"}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--muted)",
+                cursor: "pointer",
+                padding: "4px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </div>
           <div className="form-between"><label className="check-label"><input type="checkbox"/> Remember me</label><a href="#">Forgot password?</a></div>
           <button className="btn btn-primary btn-block" type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign in"} {!loading && <ArrowUpRight size={17}/>}</button>
           <p className="auth-switch">New to KindConnect? <Link href="/register">Create an account</Link></p>
         </form>
+
+        {/* Instant Mobile / Offline Demo Access */}
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed var(--line)", textAlign: "center" }}>
+          <p className="muted" style={{ fontSize: "0.74rem", margin: "0 0 10px 0" }}>
+            Testing or evaluating from mobile? Explore with 1-click:
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => {
+                loginAsDemo("admin");
+                toast.success("Welcome, Halima Yesmin Omi (Admin)! 🎉");
+                router.push("/dashboard");
+              }}
+              style={{ fontSize: "0.72rem", padding: "8px 6px", borderColor: "var(--green)", color: "var(--green)", fontWeight: 700 }}
+            >
+              <ShieldCheck size={14} /> Demo Admin (Omi)
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => {
+                loginAsDemo("volunteer");
+                toast.success("Welcome, Shraboni Das (Volunteer)! 🤝");
+                router.push("/dashboard");
+              }}
+              style={{ fontSize: "0.72rem", padding: "8px 6px", fontWeight: 600 }}
+            >
+              Demo Volunteer
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </main>;

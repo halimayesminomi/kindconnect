@@ -7,6 +7,7 @@ import { EventCard } from "@/components/cards";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useSite } from "@/components/site-provider";
+import { FALLBACK_EVENTS } from "@/lib/fallbackData";
 import toast from "react-hot-toast";
 
 const GALLERY_ITEMS = [
@@ -50,14 +51,32 @@ const GALLERY_ITEMS = [
 
 export default function Home() {
   const [events, setEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [subscribing, setSubscribing] = useState(false);
   const { lang, t } = useSite();
 
   useEffect(() => {
+    let isMounted = true;
     api.getRecentEvents()
-      .then(res => setEvents(res.data || []))
-      .catch(() => setEvents([]));
+      .then(res => {
+        if (!isMounted) return;
+        if (res?.data && res.data.length > 0) {
+          setEvents(res.data);
+        } else {
+          setEvents(FALLBACK_EVENTS.slice(0, 6));
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        // Fall back gracefully to community events if backend is unreachable or starting up
+        setEvents(FALLBACK_EVENTS.slice(0, 6));
+      })
+      .finally(() => {
+        if (isMounted) setLoadingEvents(false);
+      });
+
+    return () => { isMounted = false; };
   }, []);
 
   const handleSubscribe = (e) => {
@@ -139,14 +158,16 @@ export default function Home() {
           action={<Link className="text-link" href="/events">View all events <ArrowRight size={16}/></Link>}
         />
         <div className="event-grid">
-          {events.length > 0 ? (
-            events.slice(0, 6).map(e => <EventCard key={e._id} event={{ ...e, id: e._id }} />)
-          ) : (
+          {loadingEvents ? (
             [1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="event-card" style={{ minHeight: 320, display: "grid", placeItems: "center", opacity: 0.4 }}>
                 <p className="muted">Loading opportunity...</p>
               </div>
             ))
+          ) : events.length > 0 ? (
+            events.slice(0, 6).map(e => <EventCard key={e._id || e.id} event={{ ...e, id: e._id || e.id }} />)
+          ) : (
+            FALLBACK_EVENTS.slice(0, 6).map(e => <EventCard key={e._id || e.id} event={{ ...e, id: e._id || e.id }} />)
           )}
         </div>
       </section>

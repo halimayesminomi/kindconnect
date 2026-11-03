@@ -5,15 +5,24 @@ async function request(endpoint, options = {}) {
   const headers = { "Content-Type": "application/json", ...options.headers };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-  const data = await res.json().catch(() => ({}));
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+    const data = await res.json().catch(() => ({}));
 
-  if (!res.ok) {
-    const error = new Error(data.message || "Something went wrong");
-    error.status = res.status;
-    throw error;
+    if (!res.ok) {
+      const error = new Error(data.message || "Something went wrong");
+      error.status = res.status;
+      throw error;
+    }
+    return data;
+  } catch (err) {
+    if (err.name === "TypeError" || (err.message && err.message.toLowerCase().includes("fetch"))) {
+      const error = new Error("Cannot connect to backend server. The API server is currently unreachable from this device.");
+      error.isNetworkError = true;
+      throw error;
+    }
+    throw err;
   }
-  return data;
 }
 
 export const api = {

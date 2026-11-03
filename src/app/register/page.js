@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HeartHandshake, ArrowUpRight, User, Mail, LockKeyhole, ImageIcon } from "lucide-react";
+import { HeartHandshake, ArrowUpRight, User, Mail, LockKeyhole, ImageIcon, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import toast from "react-hot-toast";
@@ -11,6 +11,7 @@ export default function Register() {
   const router = useRouter();
   const { register, loginWithGoogle, user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -38,7 +39,12 @@ export default function Register() {
       toast.success("Account created! Welcome to KindConnect 🎉");
       router.push("/dashboard");
     } catch (err) {
-      toast.error(err.message || "Registration failed. Please try again.");
+      const msg = err.message || "";
+      if (msg.includes("Failed to fetch") || msg.includes("network") || msg.includes("NetworkError")) {
+        toast.error("Backend server unreachable. The Express server is running on localhost or offline. Please check connection.");
+      } else {
+        toast.error(msg || "Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -139,7 +145,35 @@ export default function Register() {
           <label>Photo URL <small className="muted">(optional)</small></label>
           <div className="input-wrap"><ImageIcon/><input name="photoURL" placeholder="https://example.com/photo.jpg"/></div>
           <label>Password</label>
-          <div className="input-wrap"><LockKeyhole/><input name="password" type="password" placeholder="At least 6 characters" minLength="6" required/></div>
+          <div className="input-wrap" style={{ position: "relative" }}>
+            <LockKeyhole size={17} />
+            <input 
+              name="password" 
+              type={showPassword ? "text" : "password"} 
+              placeholder="At least 6 characters" 
+              minLength={6} 
+              required
+              style={{ flex: 1, paddingRight: 32 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(prev => !prev)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              title={showPassword ? "Hide password" : "Show password"}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--muted)",
+                cursor: "pointer",
+                padding: "4px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </div>
           <label className="check-label terms"><input name="terms" type="checkbox" required/> I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</label>
           <button className="btn btn-primary btn-block" type="submit" disabled={loading}>{loading ? "Creating account..." : "Create account"} {!loading && <ArrowUpRight size={17}/>}</button>
           <p className="auth-switch">Already a member? <Link href="/login">Sign in</Link></p>

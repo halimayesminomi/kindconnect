@@ -20,18 +20,18 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 
 const app = express();
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://halimayesminomi2002_db_user:cdaabzFp3Nh55WmK@kindconnect.6ymngxp.mongodb.net/kindconnect";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://halimayesminomi2002_db_user:cdaabzFp3Nh55WmK@kindconnect.6ymngxp.mongodb.net/test";
 
 mongoose.connect(MONGODB_URI)
     .then(() => {
-        console.log("MongoDB Connected Successfully!");
+        console.log("MongoDB Connected Successfully to:", mongoose.connection.name);
     })
     .catch((error) => {
         console.error("MongoDB Connection Error:", error.message);
     });
 
 app.use(cors({
-    origin: process.env.CLIENT_URL || true,
+    origin: true, // Allow web clients, mobile browsers, and Vercel deployments
     credentials: true
 }));
 

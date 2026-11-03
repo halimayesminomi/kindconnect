@@ -21,6 +21,7 @@ import Link from "next/link";
 import { PublicLayout } from "@/components/site";
 import { EventCard } from "@/components/cards";
 import { api } from "@/lib/api";
+import { FALLBACK_EVENTS } from "@/lib/fallbackData";
 
 export const BANGLADESH_DIVISIONS = [
   {
@@ -191,13 +192,25 @@ export default function EventsPage() {
 
   useEffect(() => {
     api.getEvents()
-      .then(res => setEvents(res.data || []))
-      .catch(() => setEvents([]))
+      .then(res => {
+        if (res?.data && res.data.length > 0) {
+          setEvents(res.data);
+        } else {
+          setEvents(FALLBACK_EVENTS);
+        }
+      })
+      .catch(() => setEvents(FALLBACK_EVENTS))
       .finally(() => setLoading(false));
 
     api.getRecommendations()
-      .then(res => setRecommendations(res.data || []))
-      .catch(() => setRecommendations([]));
+      .then(res => {
+        if (res?.data && res.data.length > 0) {
+          setRecommendations(res.data);
+        } else {
+          setRecommendations(FALLBACK_EVENTS.slice(0, 3));
+        }
+      })
+      .catch(() => setRecommendations(FALLBACK_EVENTS.slice(0, 3)));
   }, []);
 
   const activeDivision = useMemo(() => {

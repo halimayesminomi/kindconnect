@@ -11,14 +11,22 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const token = localStorage.getItem("kindconnect_token");
+    const demo = typeof window !== "undefined" ? localStorage.getItem("kindconnect_demo_user") : null;
     if (token) {
       api.getUser()
         .then((data) => setUser(data.data || data.user))
         .catch(() => {
-          localStorage.removeItem("kindconnect_token");
-          setUser(null);
+          if (demo) {
+            try { setUser(JSON.parse(demo)); } catch (_) { setUser(null); }
+          } else {
+            localStorage.removeItem("kindconnect_token");
+            setUser(null);
+          }
         })
         .finally(() => setLoading(false));
+    } else if (demo) {
+      try { setUser(JSON.parse(demo)); } catch (_) { setUser(null); }
+      setLoading(false);
     } else {
       setLoading(false);
     }
@@ -27,6 +35,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const data = await api.login({ email, password });
     localStorage.setItem("kindconnect_token", data.token);
+    localStorage.removeItem("kindconnect_demo_user");
     setUser(data.user);
     return data;
   };
@@ -34,8 +43,37 @@ export function AuthProvider({ children }) {
   const register = async (name, email, password, photoURL) => {
     const data = await api.register({ name, email, password, photoURL });
     localStorage.setItem("kindconnect_token", data.token);
+    localStorage.removeItem("kindconnect_demo_user");
     setUser(data.user);
     return data;
+  };
+
+  const loginAsDemo = (role = "admin") => {
+    const demoUser = role === "admin" ? {
+      _id: "demo-omi-admin",
+      name: "Halima Yesmin Omi",
+      username: "omi",
+      email: "omi@kindconnect.org",
+      role: "admin",
+      designation: "Platform Admin & Lead Builder",
+      points: 1250,
+      hoursVolunteered: 38,
+      photoURL: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80"
+    } : {
+      _id: "demo-volunteer-01",
+      name: "Shraboni Das",
+      username: "shraboni",
+      email: "shraboni@kindconnect.org",
+      role: "volunteer",
+      designation: "Active Community Volunteer",
+      points: 620,
+      hoursVolunteered: 24,
+      photoURL: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80"
+    };
+
+    localStorage.setItem("kindconnect_demo_user", JSON.stringify(demoUser));
+    setUser(demoUser);
+    return demoUser;
   };
 
   const socialLogin = async (provider = "google") => {
@@ -57,11 +95,12 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem("kindconnect_token");
+    localStorage.removeItem("kindconnect_demo_user");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, socialLogin, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginAsDemo, socialLogin, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
