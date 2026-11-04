@@ -180,21 +180,63 @@ export default function Certificates() {
     <>
       {/* Print CSS rules to ensure only the certificate prints cleanly */}
       <style jsx global>{`
+        @page {
+          size: A4 landscape;
+          margin: 0mm !important;
+        }
+
         @media print {
+          /* Remove browser margins and default header/footer completely */
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #0d1510 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Hide ALL site layout, navigation, sidebars and headers */
           body * {
             visibility: hidden !important;
           }
-          #printable-certificate, #printable-certificate * {
+
+          .no-print, 
+          header, 
+          nav, 
+          aside, 
+          .dash-topbar, 
+          .dash-heading, 
+          .btn, 
+          .help-card, 
+          .sidebar, 
+          .workspace-label, 
+          .side-links,
+          .site-header,
+          .site-footer {
+            display: none !important;
+          }
+
+          /* Show ONLY the certificate element */
+          .printable-sheet, .printable-sheet * {
             visibility: visible !important;
           }
-          #printable-certificate {
+
+          .printable-sheet {
             position: fixed !important;
             left: 0 !important;
             top: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
             margin: 0 !important;
-            padding: 40px !important;
+            padding: 36px 48px !important;
+            box-sizing: border-box !important;
+            border: 3px solid #b7f36b !important;
+            border-radius: 0 !important;
             box-shadow: none !important;
             background: #0d1510 !important;
             color: #ffffff !important;
@@ -202,10 +244,8 @@ export default function Certificates() {
             print-color-adjust: exact !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: center !important;
-          }
-          .no-print {
-            display: none !important;
+            justify-content: space-between !important;
+            z-index: 9999999 !important;
           }
         }
       `}</style>
@@ -611,6 +651,7 @@ export default function Certificates() {
           /* ============================================================== */
           <div 
             id="printable-certificate"
+            className={`printable-sheet ${selectedEventCert ? "no-print" : ""}`}
             style={{
               background: "linear-gradient(145deg, #0e1712 0%, #080f0b 100%)",
               border: "3px solid #b7f36b",
@@ -1048,33 +1089,41 @@ export default function Certificates() {
       {/* SINGLE EVENT CERTIFICATE MODAL VIEW                           */}
       {/* ============================================================== */}
       {selectedEventCert && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.85)",
-          backdropFilter: "blur(6px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-          padding: 20
-        }}>
-          <div style={{
-            maxWidth: 780,
-            width: "100%",
-            maxHeight: "92vh",
-            overflowY: "auto",
-            background: "linear-gradient(145deg, #0e1712 0%, #080f0b 100%)",
-            border: "2px solid var(--green)",
-            borderRadius: 20,
-            padding: "36px 32px",
-            position: "relative",
-            boxShadow: "0 25px 80px rgba(0,0,0,0.9)",
-            color: "#ffffff"
-          }}>
+        <div 
+          className="modal-print-wrapper"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 20
+          }}
+        >
+          <div 
+            id="printable-event-certificate"
+            className="printable-sheet"
+            style={{
+              maxWidth: 780,
+              width: "100%",
+              maxHeight: "92vh",
+              overflowY: "auto",
+              background: "linear-gradient(145deg, #0e1712 0%, #080f0b 100%)",
+              border: "2px solid var(--green)",
+              borderRadius: 20,
+              padding: "36px 32px",
+              position: "relative",
+              boxShadow: "0 25px 80px rgba(0,0,0,0.9)",
+              color: "#ffffff"
+            }}
+          >
             {/* Close Button */}
             <button
               onClick={() => setSelectedEventCert(null)}
+              className="no-print"
               style={{
                 position: "absolute",
                 top: 18,
@@ -1168,9 +1217,9 @@ export default function Certificates() {
             </div>
 
             {/* Action Buttons */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 24 }}>
+            <div className="no-print" style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 24 }}>
               <button 
-                onClick={() => window.print()} 
+                onClick={() => handlePrint()} 
                 className="btn btn-primary"
                 style={{ padding: "8px 18px", fontSize: ".84rem" }}
               >
