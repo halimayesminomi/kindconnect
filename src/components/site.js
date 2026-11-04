@@ -53,8 +53,12 @@ export function Navbar() {
     router.push("/");
   };
 
-  const initials = user?.name ? user.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) : "";
-  const firstName = user?.name ? user.name.split(" ")[0] : "Account";
+  const initials = typeof user?.name === "string" && user.name.trim()
+    ? user.name.trim().split(/\s+/).filter(Boolean).map(w => w[0] || "").join("").toUpperCase().slice(0, 2) || "U"
+    : "U";
+  const firstName = typeof user?.name === "string" && user.name.trim()
+    ? (user.name.trim().split(/\s+/)[0] || "Account")
+    : "Account";
 
   return (
     <header className="site-header">

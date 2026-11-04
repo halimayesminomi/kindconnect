@@ -23,10 +23,15 @@ export function AuthProvider({ children }) {
       } else {
         // Remote JWT token from backend
         api.getUser()
-          .then((data) => setUser(data.data || data.user))
+          .then((data) => {
+            const u = data?.data || data?.user || null;
+            setUser(u);
+          })
           .catch(() => {
-            localStorage.removeItem("kindconnect_token");
-            localStorage.removeItem("kindconnect_demo_user");
+            try {
+              localStorage.removeItem("kindconnect_token");
+              localStorage.removeItem("kindconnect_demo_user");
+            } catch (_) {}
             setUser(null);
           })
           .finally(() => setLoading(false));

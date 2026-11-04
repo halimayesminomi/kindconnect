@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "./auth-provider";
 import { useSite } from "./site-provider";
 import { api } from "@/lib/api";
+import toast from "react-hot-toast";
 
 export function DashboardShell({ children, user }) {
   const pathname = usePathname();
@@ -40,8 +41,8 @@ export function DashboardShell({ children, user }) {
     } catch (_) {}
   };
 
-  const displayName = user?.name || "User";
-  const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  const displayName = typeof user?.name === "string" && user.name.trim() ? user.name : "User";
+  const initials = displayName.trim().split(/\s+/).filter(Boolean).map(w => w[0] || "").join("").toUpperCase().slice(0, 2) || "U";
   const isAdmin = user?.role === "admin";
   const isOrganizer = user?.role === "organizer" || isAdmin;
   const role = isAdmin 
@@ -72,11 +73,9 @@ export function DashboardShell({ children, user }) {
           playNotificationChime();
           const latestUnread = notifs.find(n => !n.read);
           if (latestUnread) {
-            import("react-hot-toast").then(({ default: toast }) => {
-              toast(latestUnread.title + ": " + latestUnread.message, {
-                icon: "💬",
-                duration: 5000,
-              });
+            toast(latestUnread.title + ": " + latestUnread.message, {
+              icon: "💬",
+              duration: 5000,
             });
           }
         }
@@ -270,8 +269,8 @@ export function DashboardShell({ children, user }) {
                             {n.title}
                           </b>
                         </div>
-                        <small className="muted" style={{ fontSize: "0.62rem", whiteSpace: "nowrap" }}>
-                          {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        <small className="muted" suppressHydrationWarning style={{ fontSize: "0.62rem", whiteSpace: "nowrap" }}>
+                          {n.createdAt ? new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
                         </small>
                       </div>
                       <p className="muted" style={{ fontSize: "0.73rem", margin: "4px 0 0", paddingLeft: 20 }}>

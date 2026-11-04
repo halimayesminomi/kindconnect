@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { 
   MessageSquare, 
@@ -22,7 +22,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import toast from "react-hot-toast";
 
-export default function ChatPage() {
+function ChatContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const initialEventId = searchParams.get("event");
@@ -519,7 +519,7 @@ export default function ChatPage() {
                     </b>
                     {ev.lastMessage && (
                       <small className="muted" style={{ fontSize: "0.68rem", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>
-                        {ev.lastMessage.senderName?.split(" ")[0]}: {ev.lastMessage.text}
+                        {((ev.lastMessage.senderName || "").trim().split(/\s+/)[0] || "User")}: {ev.lastMessage.text}
                       </small>
                     )}
                   </div>
@@ -813,5 +813,17 @@ export default function ChatPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: "60vh", display: "grid", placeItems: "center", color: "var(--muted)" }}>
+        <p>Loading KindConnect Live Chat...</p>
+      </div>
+    }>
+      <ChatContent />
+    </Suspense>
   );
 }

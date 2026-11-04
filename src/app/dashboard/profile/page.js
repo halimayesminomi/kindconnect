@@ -88,7 +88,9 @@ export default function ProfilePage() {
   }, []);
 
   const isAdmin = user?.role === "admin";
-  const initials = user?.name ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U";
+  const initials = typeof user?.name === "string" && user.name.trim()
+    ? user.name.trim().split(/\s+/).filter(Boolean).map(n => n[0] || "").join("").toUpperCase().slice(0, 2) || "U"
+    : "U";
 
   // Handle photo upload from phone gallery or laptop file picker
   const handleFileSelected = async (e) => {

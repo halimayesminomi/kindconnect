@@ -27,7 +27,9 @@ export default function Dashboard() {
   const dateStr = now.toLocaleDateString(lang === "bn" ? "bn-BD" : "en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).toUpperCase();
   const isAdmin = user?.role === "admin";
   const isOrganizer = user?.role === "organizer" || isAdmin;
-  const displayName = isOrganizer ? (user?.name || "Halima Yesmin Omi") : (user?.name?.split(" ")[0] || "there");
+  const displayName = isOrganizer 
+    ? (user?.name || "Halima Yesmin Omi") 
+    : (typeof user?.name === "string" && user.name.trim() ? (user.name.trim().split(/\s+/)[0] || "there") : "there");
 
   return <>
     {isAdmin ? (
@@ -94,7 +96,7 @@ export default function Dashboard() {
 
     <div className="dash-heading">
       <div>
-        <span className="eyebrow">{dateStr}</span>
+        <span className="eyebrow" suppressHydrationWarning>{dateStr}</span>
         <h1>{greeting}, {displayName} <span>✳</span></h1>
         <p className="muted">{isOrganizer ? (lang === "bn" ? "আবার স্বাগতম, লিড অর্গানাইজার। আপনার কমিউনিটি উদ্যোগ পরিচালনা করুন।" : "Welcome back, Lead Organizer. Manage community initiatives and platform events.") : (lang === "bn" ? "আজকের দিনটিকে অর্থপূর্ণ করতে প্রস্তুত?" : "Ready to make today meaningful?")}</p>
       </div>
