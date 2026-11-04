@@ -1,0 +1,261 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1150" width="1100" height="1150">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+
+    <linearGradient id="clientGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0f9ff"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+
+    <linearGradient id="extGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="100%" stop-color="#fef3c7"/>
+    </linearGradient>
+
+    <linearGradient id="serverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0fdf4"/>
+      <stop offset="100%" stop-color="#dcfce7"/>
+    </linearGradient>
+
+    <linearGradient id="dbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#faf5ff"/>
+      <stop offset="100%" stop-color="#f3e8ff"/>
+    </linearGradient>
+
+    <!-- Arrow Markers -->
+    <marker id="arrow-slate" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#d97706"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#9333ea"/>
+    </marker>
+
+    <!-- Drop Shadow Filter -->
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.07"/>
+    </filter>
+  </defs>
+
+  <style>
+    .title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 800; fill: #0f172a; }
+    .subtitle { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13.5px; fill: #64748b; }
+    .tier-heading { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 800; font-size: 16px; }
+    .badge { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 800; font-size: 10.5px; letter-spacing: 0.6px; }
+    .item-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 700; font-size: 12px; fill: #1e293b; }
+    .item-desc { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 10.5px; fill: #64748b; }
+    .pill-text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 700; font-size: 11px; fill: #334155; }
+    .connector-text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 700; font-size: 11px; }
+  </style>
+
+  <!-- Outer Canvas Frame -->
+  <rect x="15" y="15" width="1070" height="1120" rx="22" fill="url(#bgGrad)" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+
+  <!-- ==================== HEADER ==================== -->
+  <g transform="translate(550, 48)" text-anchor="middle">
+    <rect x="-240" y="0" width="480" height="28" rx="14" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <text x="0" y="18" text-anchor="middle" class="badge" fill="#065f46">METROPOLITAN UNIVERSITY • CSE 323 (WEB PROGRAMMING LAB)</text>
+    
+    <text x="0" y="58" class="title" font-size="25">KindConnect High-Level System Architecture</text>
+    <text x="0" y="82" class="subtitle">Complete 4-Tier Architecture with Anti-Fraud Google Auth &amp; Real-Time Multi-Sensory Notification Engine</text>
+    <text x="0" y="104" font-family="'Segoe UI', Roboto, sans-serif" font-size="11.5" fill="#059669" font-weight="700">Lead Builder: Halima Yesmin Omi (251-112-001) &amp; Shraboni Das (251-112-006) • Instructor: Mr. Abu Jafar Md. Jakaria</text>
+    <line x1="-480" y1="118" x2="480" y2="118" stroke="#e2e8f0" stroke-width="1.5"/>
+  </g>
+
+  <!-- ==================== TIER 1: CLIENT (PRESENTATION) ==================== -->
+  <g transform="translate(45, 185)">
+    <rect x="0" y="0" width="1010" height="165" rx="14" fill="url(#clientGrad)" stroke="#0284c7" stroke-width="2" filter="url(#shadow)"/>
+    
+    <text x="24" y="32" class="tier-heading" fill="#0369a1">🌐 TIER 1: Client Presentation &amp; Interaction Layer (Desktop &amp; Mobile Responsive)</text>
+    <rect x="850" y="16" width="135" height="22" rx="6" fill="#bae6fd"/>
+    <text x="917" y="31" text-anchor="middle" class="badge" fill="#075985">NEXT.JS 15 CLIENT</text>
+
+    <!-- Sub-cards (4 Columns) -->
+    <!-- Col 1 -->
+    <g transform="translate(24, 50)">
+      <rect x="0" y="0" width="225" height="96" rx="8" fill="#ffffff" stroke="#bae6fd"/>
+      <text x="112" y="24" text-anchor="middle" class="item-title">Next.js 15 &amp; React 19</text>
+      <text x="112" y="42" text-anchor="middle" class="item-desc">• App Router SSR / Hydration</text>
+      <text x="112" y="60" text-anchor="middle" class="item-desc">• Reactive Context &amp; Hooks</text>
+      <text x="112" y="78" text-anchor="middle" class="item-desc">• Tailwind CSS &amp; Lucide Icons</text>
+    </g>
+
+    <!-- Col 2 -->
+    <g transform="translate(269, 50)">
+      <rect x="0" y="0" width="225" height="96" rx="8" fill="#ffffff" stroke="#bae6fd"/>
+      <text x="112" y="24" text-anchor="middle" class="item-title">Anti-Fraud Google GIS</text>
+      <text x="112" y="42" text-anchor="middle" class="item-desc">• Google OAuth 2.0 GIS Popup</text>
+      <text x="112" y="60" text-anchor="middle" class="item-desc">• Prevents Fake/Disposable Email</text>
+      <text x="112" y="78" text-anchor="middle" class="item-desc">• Token Dispatch to Backend</text>
+    </g>
+
+    <!-- Col 3 -->
+    <g transform="translate(514, 50)">
+      <rect x="0" y="0" width="225" height="96" rx="8" fill="#ffffff" stroke="#bae6fd"/>
+      <text x="112" y="24" text-anchor="middle" class="item-title">Sound Chime &amp; Notifications</text>
+      <text x="112" y="42" text-anchor="middle" class="item-desc">• HTML5 Web Audio API Synth</text>
+      <text x="112" y="60" text-anchor="middle" class="item-desc">• Bell &amp; Sidebar Live Chat Badges</text>
+      <text x="112" y="78" text-anchor="middle" class="item-desc">• Real-time Toast Previews</text>
+    </g>
+
+    <!-- Col 4 -->
+    <g transform="translate(759, 50)">
+      <rect x="0" y="0" width="225" height="96" rx="8" fill="#ffffff" stroke="#bae6fd"/>
+      <text x="112" y="24" text-anchor="middle" class="item-title">Local Media &amp; Bilingual i18n</text>
+      <text x="112" y="42" text-anchor="middle" class="item-desc">• HTML5 FileAPI / Gallery Upload</text>
+      <text x="112" y="60" text-anchor="middle" class="item-desc">• Base64 Profile Picture Stream</text>
+      <text x="112" y="78" text-anchor="middle" class="item-desc">• EN / বাংলা &amp; Day/Night Themes</text>
+    </g>
+  </g>
+
+  <!-- ==================== CONNECTOR 1: CLIENT <-> SERVER & GOOGLE ==================== -->
+  <g transform="translate(550, 350)">
+    <!-- Vertical connector to server -->
+    <line x1="0" y1="0" x2="0" y2="60" stroke="#475569" stroke-width="2" marker-end="url(#arrow-slate)"/>
+    <rect x="-240" y="16" width="480" height="28" rx="14" fill="#ffffff" stroke="#475569" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="0" y="34" text-anchor="middle" class="pill-text">🔒 HTTPS REST APIs (Bearer JWT Authorization + GIS Google Token)</text>
+  </g>
+
+  <!-- ==================== TIER 2: EXTERNAL SERVICES TIER ==================== -->
+  <g transform="translate(45, 420)">
+    <rect x="0" y="0" width="1010" height="90" rx="14" fill="url(#extGrad)" stroke="#d97706" stroke-width="2" filter="url(#shadow)"/>
+    
+    <text x="24" y="28" class="tier-heading" fill="#b45309">☁️ TIER 2: External Security &amp; Geo-Spatial Cloud Services</text>
+    <rect x="830" y="12" width="155" height="22" rx="6" fill="#fde68a"/>
+    <text x="907" y="27" text-anchor="middle" class="badge" fill="#92400e">THIRD-PARTY CLOUD</text>
+
+    <!-- Services Chips -->
+    <g transform="translate(24, 40)">
+      <rect x="0" y="0" width="465" height="38" rx="6" fill="#ffffff" stroke="#fcd34d"/>
+      <text x="15" y="24" class="item-title" fill="#92400e">🔑 Google OAuth 2.0 UserInfo API</text>
+      <text x="235" y="24" class="item-desc">Token Validation Server (Anti-Fraud Identity Guard)</text>
+    </g>
+
+    <g transform="translate(519, 40)">
+      <rect x="0" y="0" width="465" height="38" rx="6" fill="#ffffff" stroke="#fcd34d"/>
+      <text x="15" y="24" class="item-title" fill="#92400e">🗺️ OpenStreetMap &amp; Leaflet Tiles</text>
+      <text x="235" y="24" class="item-desc">Nationwide Interactive Map (Sylhet &amp; 8 Divisions)</text>
+    </g>
+  </g>
+
+  <!-- ==================== CONNECTOR 2: EXT <-> SERVER ==================== -->
+  <g transform="translate(550, 510)">
+    <line x1="0" y1="0" x2="0" y2="40" stroke="#d97706" stroke-width="2" marker-end="url(#arrow-amber)"/>
+    <rect x="-210" y="7" width="420" height="26" rx="13" fill="#ffffff" stroke="#d97706" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="0" y="24" text-anchor="middle" class="connector-text" fill="#b45309">🛡️ Server-to-Server Google Token Signature &amp; Email Verification</text>
+  </g>
+
+  <!-- ==================== TIER 3: BACKEND APPLICATION LOGIC ==================== -->
+  <g transform="translate(45, 560)">
+    <rect x="0" y="0" width="1010" height="260" rx="14" fill="url(#serverGrad)" stroke="#16a34a" stroke-width="2" filter="url(#shadow)"/>
+    
+    <text x="24" y="32" class="tier-heading" fill="#15803d">⚙️ TIER 3: Backend Application &amp; Serverless Business Logic Layer</text>
+    <rect x="800" y="16" width="185" height="22" rx="6" fill="#bbf7d0"/>
+    <text x="892" y="31" text-anchor="middle" class="badge" fill="#14532d">NEXT.JS 15 API &amp; EXPRESS</text>
+
+    <!-- Sub-row 1: Security & Middleware -->
+    <g transform="translate(24, 48)">
+      <rect x="0" y="0" width="962" height="44" rx="8" fill="#ffffff" stroke="#86efac"/>
+      <rect x="10" y="8" width="190" height="28" rx="6" fill="#dcfce7"/>
+      <text x="105" y="26" text-anchor="middle" class="badge" fill="#166534">SECURITY MIDDLEWARE</text>
+      <text x="220" y="27" class="pill-text" font-weight="600">JWT Signature Guard  •  Role-Based Access Control (RBAC)  •  Bcrypt Password Hash  •  Google Token Verifier</text>
+    </g>
+
+    <!-- Sub-row 2: Business Logic Controllers -->
+    <g transform="translate(24, 102)">
+      <rect x="0" y="0" width="962" height="94" rx="8" fill="#ffffff" stroke="#86efac"/>
+      <rect x="10" y="12" width="190" height="70" rx="6" fill="#dcfce7"/>
+      <text x="105" y="42" text-anchor="middle" class="badge" fill="#166534">CORE ENGINES</text>
+      <text x="105" y="60" text-anchor="middle" class="badge" fill="#166534">&amp; CONTROLLERS</text>
+
+      <g transform="translate(220, 10)">
+        <text x="0" y="18" class="item-title" font-size="12">1. Anti-Fraud Auth &amp; Google Verify: Validates Google token against Google API before DB account creation.</text>
+        <text x="0" y="36" class="item-title" font-size="12">2. Persistent Live Chat Engine: BSON type-safe reconciliation (ObjectId &amp; String) for Event &amp; Admin rooms.</text>
+        <text x="0" y="54" class="item-title" font-size="12">3. Multi-Sensory Notification Engine: Computes unread counts, dispatches realtime alerts, tracks readBy arrays.</text>
+        <text x="0" y="72" class="item-title" font-size="12">4. Admin Governance Hub: Dedicated Omi credentials, 1-click deep user profile inspection &amp; instant direct chat.</text>
+      </g>
+    </g>
+
+    <!-- Sub-row 3: Auxiliary Engines -->
+    <g transform="translate(24, 206)">
+      <rect x="0" y="0" width="962" height="42" rx="8" fill="#ffffff" stroke="#86efac"/>
+      <rect x="10" y="7" width="190" height="28" rx="6" fill="#dcfce7"/>
+      <text x="105" y="25" text-anchor="middle" class="badge" fill="#166534">AUXILIARY MODULES</text>
+      <text x="220" y="26" class="pill-text" font-weight="600">Event Life-cycle Management  •  QR Attendance Check-In  •  1,000-Point Milestone Certificate  •  Emergency Relief</text>
+    </g>
+  </g>
+
+  <!-- ==================== CONNECTOR 3: SERVER <-> DB ==================== -->
+  <g transform="translate(550, 820)">
+    <line x1="0" y1="0" x2="0" y2="40" stroke="#9333ea" stroke-width="2" marker-end="url(#arrow-purple)"/>
+    <rect x="-225" y="7" width="450" height="26" rx="13" fill="#ffffff" stroke="#9333ea" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="0" y="24" text-anchor="middle" class="connector-text" fill="#7e22ce">🍃 Mongoose ODM Multi-Type Indexing &amp; CRUD Queries (Encrypted TLS)</text>
+  </g>
+
+  <!-- ==================== TIER 4: DATABASE (PERSISTENCE) ==================== -->
+  <g transform="translate(45, 870)">
+    <rect x="0" y="0" width="1010" height="235" rx="14" fill="url(#dbGrad)" stroke="#9333ea" stroke-width="2" filter="url(#shadow)"/>
+    
+    <text x="24" y="32" class="tier-heading" fill="#7e22ce">🗄️ TIER 4: Cloud Persistence Layer (MongoDB Atlas Cluster)</text>
+    <rect x="800" y="16" width="185" height="22" rx="6" fill="#e9d5ff"/>
+    <text x="892" y="31" text-anchor="middle" class="badge" fill="#581c87">MONGODB ATLAS CLOUD</text>
+
+    <!-- Collections Grid (3 columns x 2 rows) -->
+    <!-- Col 1, Row 1: Users -->
+    <g transform="translate(24, 52)">
+      <rect x="0" y="0" width="305" height="72" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+      <text x="16" y="24" class="item-title" fill="#6b21a8">📁 Users Collection</text>
+      <text x="16" y="44" class="item-desc">Name, Email, Bcrypt Password, Role (Admin,</text>
+      <text x="16" y="60" class="item-desc">Organizer, User), Points, Bio, Base64 Avatar, Phone</text>
+    </g>
+
+    <!-- Col 2, Row 1: Events -->
+    <g transform="translate(352, 52)">
+      <rect x="0" y="0" width="305" height="72" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+      <text x="16" y="24" class="item-title" fill="#6b21a8">📁 Events Collection</text>
+      <text x="16" y="44" class="item-desc">Title, Description, Category, Date, Capacity,</text>
+      <text x="16" y="60" class="item-desc">VolunteersCount, Coordinates, Creator Email</text>
+    </g>
+
+    <!-- Col 3, Row 1: Registrations -->
+    <g transform="translate(681, 52)">
+      <rect x="0" y="0" width="305" height="72" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+      <text x="16" y="24" class="item-title" fill="#6b21a8">📁 Registrations Collection</text>
+      <text x="16" y="44" class="item-desc">User-Event Binding (userId, eventId),</text>
+      <text x="16" y="60" class="item-desc">Status (registered/waitlisted), RegisteredAt</text>
+    </g>
+
+    <!-- Col 1, Row 2: Attendance -->
+    <g transform="translate(24, 138)">
+      <rect x="0" y="0" width="305" height="72" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+      <text x="16" y="24" class="item-title" fill="#6b21a8">📁 Attendance Collection</text>
+      <text x="16" y="44" class="item-desc">Event QR Scans, Volunteer Verified ID,</text>
+      <text x="16" y="60" class="item-desc">Points Awarded (+100), Hours Logged, Timestamp</text>
+    </g>
+
+    <!-- Col 2, Row 2: Messages -->
+    <g transform="translate(352, 138)">
+      <rect x="0" y="0" width="305" height="72" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+      <text x="16" y="24" class="item-title" fill="#6b21a8">📁 Messages Collection</text>
+      <text x="16" y="44" class="item-desc">Type (event_group / direct), BSON eventId,</text>
+      <text x="16" y="60" class="item-desc">Sender, Recipient, Text, Read Status, ReadBy[]</text>
+    </g>
+
+    <!-- Col 3, Row 2: Emergency -->
+    <g transform="translate(681, 138)">
+      <rect x="0" y="0" width="305" height="72" rx="8" fill="#ffffff" stroke="#d8b4fe"/>
+      <text x="16" y="24" class="item-title" fill="#6b21a8">📁 EmergencyRequests Collection</text>
+      <text x="16" y="44" class="item-desc">Blood Donation, Winter Clothes, Food Ration,</text>
+      <text x="16" y="60" class="item-desc">Urgency Level, Status, Verified Responders[]</text>
+    </g>
+  </g>
+</svg>

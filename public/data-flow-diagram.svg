@@ -1,0 +1,274 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1080" width="1100" height="1080">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="dfdBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+
+    <!-- Entity Gradient (Amber/Orange) -->
+    <linearGradient id="entityGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="100%" stop-color="#fef3c7"/>
+    </linearGradient>
+
+    <!-- Process Gradient (Sky/Blue) -->
+    <linearGradient id="processGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0fdf4"/>
+      <stop offset="100%" stop-color="#dcfce7"/>
+    </linearGradient>
+
+    <!-- Store Gradient (Purple) -->
+    <linearGradient id="storeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#faf5ff"/>
+      <stop offset="100%" stop-color="#f3e8ff"/>
+    </linearGradient>
+
+    <!-- Arrow Markers -->
+    <marker id="dfd-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0f766e"/>
+    </marker>
+    <marker id="dfd-arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#b91c1c"/>
+    </marker>
+    <marker id="dfd-arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#7e22ce"/>
+    </marker>
+
+    <!-- Shadow -->
+    <filter id="dfdShadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <style>
+    .dfd-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; fill: #0f172a; }
+    .dfd-subtitle { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #64748b; }
+    .entity-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 13px; fill: #92400e; text-anchor: middle; }
+    .entity-sub { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10px; fill: #b45309; text-anchor: middle; }
+    .process-num { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 12px; fill: #15803d; }
+    .process-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; font-size: 12.5px; fill: #14532d; }
+    .process-desc { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10px; fill: #166534; }
+    .store-id { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 11px; fill: #7e22ce; }
+    .store-name { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; font-size: 11.5px; fill: #581c87; }
+    .flow-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 9.5px; font-weight: 700; fill: #0f766e; }
+  </style>
+
+  <!-- Canvas Frame -->
+  <rect x="15" y="15" width="1070" height="1050" rx="20" fill="url(#dfdBg)" stroke="#cbd5e1" stroke-width="1.5" filter="url(#dfdShadow)"/>
+
+  <!-- ==================== HEADER ==================== -->
+  <g transform="translate(550, 45)" text-anchor="middle">
+    <rect x="-240" y="0" width="480" height="26" rx="13" fill="#f0fdf4" stroke="#86efac"/>
+    <text x="0" y="17" text-anchor="middle" font-family="'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="10.5px" fill="#15803d" letter-spacing="0.5px">METROPOLITAN UNIVERSITY • KINDCONNECT DFD (LEVEL 0 &amp; 1)</text>
+
+    <text x="0" y="54" class="dfd-title" font-size="24">KindConnect Complete Data Flow Diagram</text>
+    <text x="0" y="76" class="dfd-subtitle">Visualizing Data Flows Across Users, External Google Identity, Core Processes &amp; MongoDB Collections</text>
+    <line x1="-480" y1="92" x2="480" y2="92" stroke="#e2e8f0" stroke-width="1.5"/>
+  </g>
+
+  <!-- ==================== EXTERNAL ENTITIES (TOP ROW) ==================== -->
+  <!-- Entity 1: Volunteer / User -->
+  <g transform="translate(60, 150)">
+    <rect x="0" y="0" width="190" height="70" rx="12" fill="url(#entityGrad)" stroke="#f59e0b" stroke-width="2" filter="url(#dfdShadow)"/>
+    <text x="95" y="32" class="entity-title">🙋‍♂️ VOLUNTEER / USER</text>
+    <text x="95" y="52" class="entity-sub">Browse, Join, QR Scan, Chat</text>
+  </g>
+
+  <!-- Entity 2: Google Identity Service (External) -->
+  <g transform="translate(320, 150)">
+    <rect x="0" y="0" width="220" height="70" rx="12" fill="#fef2f2" stroke="#ef4444" stroke-width="2" filter="url(#dfdShadow)"/>
+    <text x="110" y="32" class="entity-title" fill="#b91c1c">🛡️ GOOGLE OAUTH 2.0</text>
+    <text x="110" y="52" class="entity-sub" fill="#dc2626">Anti-Fake Token Verification</text>
+  </g>
+
+  <!-- Entity 3: Platform Admin (Omi) -->
+  <g transform="translate(610, 150)">
+    <rect x="0" y="0" width="190" height="70" rx="12" fill="url(#entityGrad)" stroke="#f59e0b" stroke-width="2" filter="url(#dfdShadow)"/>
+    <text x="95" y="32" class="entity-title">👑 PLATFORM ADMIN</text>
+    <text x="95" y="52" class="entity-sub">Halima Yesmin Omi (Governance)</text>
+  </g>
+
+  <!-- Entity 4: Event Organizer -->
+  <g transform="translate(860, 150)">
+    <rect x="0" y="0" width="180" height="70" rx="12" fill="url(#entityGrad)" stroke="#f59e0b" stroke-width="2" filter="url(#dfdShadow)"/>
+    <text x="90" y="32" class="entity-title">🏢 ORGANIZER</text>
+    <text x="90" y="52" class="entity-sub">Create Events, QR Codes</text>
+  </g>
+
+  <!-- ==================== PROCESSES LAYER (MIDDLE) ==================== -->
+  
+  <!-- Process 1.0: Anti-Fraud Auth -->
+  <g transform="translate(60, 300)">
+    <rect x="0" y="0" width="460" height="95" rx="14" fill="url(#processGrad)" stroke="#16a34a" stroke-width="1.8" filter="url(#dfdShadow)"/>
+    <circle cx="28" cy="28" r="16" fill="#bbf7d0"/>
+    <text x="28" y="33" text-anchor="middle" class="process-num">1.0</text>
+    <text x="56" y="30" class="process-title">Anti-Fraud Registration &amp; Google Verification</text>
+    <text x="56" y="52" class="process-desc">• Validates Google GIS Token with Google UserInfo API</text>
+    <text x="56" y="68" class="process-desc">• Rejects fake/disposable emails; issues signed JWT session</text>
+    <text x="56" y="84" class="process-desc">• Ingests Local Gallery Avatars via HTML5 FileAPI (Base64)</text>
+  </g>
+
+  <!-- Process 2.0: Event Management & Discovery -->
+  <g transform="translate(580, 300)">
+    <rect x="0" y="0" width="460" height="95" rx="14" fill="url(#processGrad)" stroke="#16a34a" stroke-width="1.8" filter="url(#dfdShadow)"/>
+    <circle cx="28" cy="28" r="16" fill="#bbf7d0"/>
+    <text x="28" y="33" text-anchor="middle" class="process-num">2.0</text>
+    <text x="56" y="30" class="process-title">Event Life-cycle, Discovery &amp; Smart Join</text>
+    <text x="56" y="52" class="process-desc">• Dynamic search, category pills &amp; nationwide map exploration</text>
+    <text x="56" y="68" class="process-desc">• Capacity validation, duplicate blocking, automated waitlist</text>
+    <text x="56" y="84" class="process-desc">• Realtime volunteer headcount increment</text>
+  </g>
+
+  <!-- Process 3.0: QR Attendance & Certificates -->
+  <g transform="translate(60, 440)">
+    <rect x="0" y="0" width="460" height="95" rx="14" fill="url(#processGrad)" stroke="#16a34a" stroke-width="1.8" filter="url(#dfdShadow)"/>
+    <circle cx="28" cy="28" r="16" fill="#bbf7d0"/>
+    <text x="28" y="33" text-anchor="middle" class="process-num">3.0</text>
+    <text x="56" y="30" class="process-title">QR Check-In &amp; 1,000-Point Milestone Certificate</text>
+    <text x="56" y="52" class="process-desc">• Dynamic event-specific QR code scanning &amp; venue check-in</text>
+    <text x="56" y="68" class="process-desc">• Real-time +100 Points &amp; volunteer hours allocation</text>
+    <text x="56" y="84" class="process-desc">• Auto-unlocks printable institutional Certificate with verification ID</text>
+  </g>
+
+  <!-- Process 4.0: Live Chat & Audio Chime Notifications -->
+  <g transform="translate(580, 440)">
+    <rect x="0" y="0" width="460" height="95" rx="14" fill="url(#processGrad)" stroke="#16a34a" stroke-width="1.8" filter="url(#dfdShadow)"/>
+    <circle cx="28" cy="28" r="16" fill="#bbf7d0"/>
+    <text x="28" y="33" text-anchor="middle" class="process-num">4.0</text>
+    <text x="56" y="30" class="process-title">BSON Type-Safe Chat &amp; Audio Notifications</text>
+    <text x="56" y="52" class="process-desc">• Event group chats &amp; 1-on-1 direct admin messaging</text>
+    <text x="56" y="68" class="process-desc">• Type-safe BSON queries (ObjectId &amp; String) prevent message loss</text>
+    <text x="56" y="84" class="process-desc">• Web Audio API synthesized sound chime + live badge counters</text>
+  </g>
+
+  <!-- Process 5.0: Admin Governance & Profile Inspection -->
+  <g transform="translate(60, 580)">
+    <rect x="0" y="0" width="460" height="95" rx="14" fill="url(#processGrad)" stroke="#16a34a" stroke-width="1.8" filter="url(#dfdShadow)"/>
+    <circle cx="28" cy="28" r="16" fill="#bbf7d0"/>
+    <text x="28" y="33" text-anchor="middle" class="process-num">5.0</text>
+    <text x="56" y="30" class="process-title">Admin Governance &amp; Deep Profile Inspection</text>
+    <text x="56" y="52" class="process-desc">• Exclusive Admin Portal (Omi / Omi@2026 security verification)</text>
+    <text x="56" y="68" class="process-desc">• 1-click User Profile Modal: view bio, points, phone, change roles</text>
+    <text x="56" y="84" class="process-desc">• Instant direct messaging trigger from profile inspection</text>
+  </g>
+
+  <!-- Process 6.0: Emergency Relief Hub -->
+  <g transform="translate(580, 580)">
+    <rect x="0" y="0" width="460" height="95" rx="14" fill="url(#processGrad)" stroke="#16a34a" stroke-width="1.8" filter="url(#dfdShadow)"/>
+    <circle cx="28" cy="28" r="16" fill="#bbf7d0"/>
+    <text x="28" y="33" text-anchor="middle" class="process-num">6.0</text>
+    <text x="56" y="30" class="process-title">Emergency Relief Hub &amp; Responder Mobilization</text>
+    <text x="56" y="52" class="process-desc">• Citizen distress requests: Blood Donation, Blankets, Food Packs</text>
+    <text x="56" y="68" class="process-desc">• Admin verification &amp; urgency tagging (Critical / High)</text>
+    <text x="56" y="84" class="process-desc">• 1-click volunteer responder team mobilization</text>
+  </g>
+
+  <!-- ==================== DATA STORES (BOTTOM SECTION) ==================== -->
+  <g transform="translate(45, 730)">
+    <rect x="0" y="0" width="1010" height="300" rx="16" fill="url(#storeGrad)" stroke="#9333ea" stroke-width="2" filter="url(#dfdShadow)"/>
+    
+    <text x="24" y="32" class="dfd-title" font-size="16" fill="#7e22ce">🗄️ PERSISTENT DATA STORES (MongoDB Atlas Cloud Cluster)</text>
+    <rect x="800" y="16" width="185" height="22" rx="6" fill="#e9d5ff"/>
+    <text x="892" y="31" text-anchor="middle" class="badge" fill="#581c87">DATABASE REPOSITORY</text>
+
+    <!-- Store 1: Users -->
+    <g transform="translate(24, 55)">
+      <rect x="0" y="0" width="305" height="100" rx="8" fill="#ffffff" stroke="#c084fc"/>
+      <line x1="0" y1="0" x2="0" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <line x1="305" y1="0" x2="305" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <text x="14" y="22" class="store-id">D1</text>
+      <text x="40" y="22" class="store-name">Users Collection</text>
+      <text x="14" y="44" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Google Verified Email &amp; Bcrypt Passwords</text>
+      <text x="14" y="62" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Roles (admin, organizer, user), Bio, Phone</text>
+      <text x="14" y="80" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Base64 Gallery Avatars, Points &amp; Hours</text>
+    </g>
+
+    <!-- Store 2: Events -->
+    <g transform="translate(352, 55)">
+      <rect x="0" y="0" width="305" height="100" rx="8" fill="#ffffff" stroke="#c084fc"/>
+      <line x1="0" y1="0" x2="0" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <line x1="305" y1="0" x2="305" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <text x="14" y="22" class="store-id">D2</text>
+      <text x="40" y="22" class="store-name">Events Collection</text>
+      <text x="14" y="44" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Initiatives, Categories, Venue &amp; Time</text>
+      <text x="14" y="62" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Capacity Limits, Headcounts, Map Coords</text>
+      <text x="14" y="80" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Dynamic Secret QR Hash Keys</text>
+    </g>
+
+    <!-- Store 3: Registrations -->
+    <g transform="translate(681, 55)">
+      <rect x="0" y="0" width="305" height="100" rx="8" fill="#ffffff" stroke="#c084fc"/>
+      <line x1="0" y1="0" x2="0" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <line x1="305" y1="0" x2="305" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <text x="14" y="22" class="store-id">D3</text>
+      <text x="40" y="22" class="store-name">Registrations Collection</text>
+      <text x="14" y="44" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• User-Event Binding References</text>
+      <text x="14" y="62" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Unique Compound Index (No Duplicate Joins)</text>
+      <text x="14" y="80" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Waitlist Status &amp; Promotion Flags</text>
+    </g>
+
+    <!-- Store 4: Attendance -->
+    <g transform="translate(24, 175)">
+      <rect x="0" y="0" width="305" height="100" rx="8" fill="#ffffff" stroke="#c084fc"/>
+      <line x1="0" y1="0" x2="0" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <line x1="305" y1="0" x2="305" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <text x="14" y="22" class="store-id">D4</text>
+      <text x="40" y="22" class="store-name">Attendance &amp; Milestones</text>
+      <text x="14" y="44" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Scanned Venue QR Tokens</text>
+      <text x="14" y="62" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Verified Volunteer Hours (+3 hrs / scan)</text>
+      <text x="14" y="80" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• 1000-Point Certificate Generation Log</text>
+    </g>
+
+    <!-- Store 5: Messages -->
+    <g transform="translate(352, 175)">
+      <rect x="0" y="0" width="305" height="100" rx="8" fill="#ffffff" stroke="#c084fc"/>
+      <line x1="0" y1="0" x2="0" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <line x1="305" y1="0" x2="305" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <text x="14" y="22" class="store-id">D5</text>
+      <text x="40" y="22" class="store-name">Messages &amp; Alerts Store</text>
+      <text x="14" y="44" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Persistent Chat (ObjectId &amp; String eventId)</text>
+      <text x="14" y="62" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Direct 1-on-1 Admin Messages</text>
+      <text x="14" y="80" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• readBy[] Array (User-Specific Read Track)</text>
+    </g>
+
+    <!-- Store 6: Emergency Requests -->
+    <g transform="translate(681, 175)">
+      <rect x="0" y="0" width="305" height="100" rx="8" fill="#ffffff" stroke="#c084fc"/>
+      <line x1="0" y1="0" x2="0" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <line x1="305" y1="0" x2="305" y2="100" stroke="#7e22ce" stroke-width="4"/>
+      <text x="14" y="22" class="store-id">D6</text>
+      <text x="40" y="22" class="store-name">Emergency Requests Store</text>
+      <text x="14" y="44" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Blood, Blanket &amp; Food Relief Posts</text>
+      <text x="14" y="62" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Urgency &amp; Admin Verification Badges</text>
+      <text x="14" y="80" font-size="10" fill="#6b21a8" font-family="'Segoe UI', sans-serif">• Responders Array (Name, Phone, Msg)</text>
+    </g>
+  </g>
+
+  <!-- ==================== FLOW ARROWS & DATA LABELS ==================== -->
+  <!-- Volunteer -> P1 (Google GIS Auth) -->
+  <line x1="155" y1="220" x2="155" y2="300" stroke="#0f766e" stroke-width="2" marker-end="url(#dfd-arrow)"/>
+  <rect x="75" y="245" width="160" height="20" rx="4" fill="#ffffff" stroke="#99f6e4"/>
+  <text x="155" y="258" text-anchor="middle" class="flow-label">1. Google GIS Token + Phone</text>
+
+  <!-- P1 -> Google OAuth (Verification) -->
+  <line x1="350" y1="300" x2="380" y2="220" stroke="#b91c1c" stroke-width="2" marker-end="url(#dfd-arrow-red)"/>
+  <rect x="310" y="245" width="155" height="20" rx="4" fill="#ffffff" stroke="#fca5a5"/>
+  <text x="387" y="258" text-anchor="middle" class="flow-label" fill="#b91c1c">2. Verify Token Authenticity</text>
+
+  <!-- Organizer -> P2 (Create Event) -->
+  <line x1="950" y1="220" x2="950" y2="300" stroke="#0f766e" stroke-width="2" marker-end="url(#dfd-arrow)"/>
+  <rect x="860" y="245" width="170" height="20" rx="4" fill="#ffffff" stroke="#99f6e4"/>
+  <text x="945" y="258" text-anchor="middle" class="flow-label">Event Specs &amp; Capacity</text>
+
+  <!-- Admin -> P5 (Inspection & Messaging) -->
+  <line x1="705" y1="220" x2="480" y2="580" stroke="#0f766e" stroke-width="2" marker-end="url(#dfd-arrow)"/>
+  <rect x="580" y="390" width="160" height="20" rx="4" fill="#ffffff" stroke="#99f6e4"/>
+  <text x="660" y="403" text-anchor="middle" class="flow-label">Inspect User / Modulate Role</text>
+
+  <!-- Processes -> Stores (Downward Connectors) -->
+  <line x1="220" y1="395" x2="175" y2="785" stroke="#7e22ce" stroke-width="2" marker-end="url(#dfd-arrow-purple)"/>
+  <line x1="810" y1="395" x2="505" y2="785" stroke="#7e22ce" stroke-width="2" marker-end="url(#dfd-arrow-purple)"/>
+  <line x1="290" y1="535" x2="175" y2="905" stroke="#7e22ce" stroke-width="2" marker-end="url(#dfd-arrow-purple)"/>
+  <line x1="810" y1="535" x2="505" y2="905" stroke="#7e22ce" stroke-width="2" marker-end="url(#dfd-arrow-purple)"/>
+</svg>
