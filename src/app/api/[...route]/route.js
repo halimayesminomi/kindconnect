@@ -45,7 +45,7 @@ async function getAllAdminIdentities() {
     $or: [
       { role: "admin" },
       { username: "omi" },
-      { email: { $in: ["omi@kindconnect.org", "halimaomi2002@gmail.com", "halima@kindconnect.org", "halimatanima@gmail.com"] } },
+      { email: { $in: ["omi@kindconnect.org", "halimaomi2002@gmail.com", "halimayesminomi2002@gmail.com", "halima@kindconnect.org"] } },
     ],
   }).select("_id username email name photoURL designation");
 
@@ -64,7 +64,7 @@ async function getAllAdminIdentities() {
     }
   });
 
-  const primaryAdmin = admins.find((a) => a.username === "omi") || admins[0] || null;
+  const primaryAdmin = admins.find((a) => a.username === "omi") || admins.find((a) => a.email === "omi@kindconnect.org") || admins[0] || null;
 
   return {
     primaryAdmin,
@@ -326,7 +326,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ success: true, data: emergency });
     }
 
-    // 15. Chat: My Events / Channels
+    // 15. Chat: My Events / Channels (Only events user is part of, or all for Admin)
     if (path === "chat/my-events") {
       const decoded = verifyToken(request);
       await ensureSeedEvents();
@@ -341,11 +341,8 @@ export async function GET(request, { params }) {
         const map = new Map();
         [...createdEvents, ...registeredEvents].forEach((e) => map.set(e._id.toString(), e));
         events = Array.from(map.values());
-        if (events.length === 0) {
-          events = await Event.find({ status: "published" }).sort({ date: 1 }).limit(10);
-        }
       } else {
-        events = await Event.find({ status: "published" }).sort({ date: 1 }).limit(10);
+        events = [];
       }
 
       const summaries = await Promise.all(
@@ -384,9 +381,13 @@ export async function GET(request, { params }) {
       return NextResponse.json({ success: true, data: summaries });
     }
 
-    // 16. Chat: Messages for an event group
+    // 16. Chat: Messages for an event group (Protected: only members & admin can view)
     if (route[0] === "chat" && route[1] === "events" && route[3] === "messages") {
       const decoded = verifyToken(request);
+      if (!decoded) {
+        return NextResponse.json({ message: "Authentication required to view event chat" }, { status: 401 });
+      }
+
       const eventId = route[2];
       let event = null;
       try {
@@ -394,6 +395,45 @@ export async function GET(request, { params }) {
       } catch (_) {}
       if (!event) {
         event = FALLBACK_EVENTS.find((e) => e._id === eventId || e.id === eventId);
+      }
+
+      const isAdmin = decoded.role === "admin";
+      const userVariants = toIdVariants(decoded.id);
+
+      // Verify that user is Admin, Event Creator, or a Registered Volunteer for this event
+      let isMember = isAdmin;
+      if (!isMember && event?.creatorEmail && decoded.email && event.creatorEmail.toLowerCase() === decoded.email.toLowerCase()) {
+        isMember = true;
+      }
+      if (!isMember) {
+        const evVariants = toIdVariants(eventId);
+        const reg = await Registration.findOne({
+          eventId: { $in: evVariants },
+          userId: { $in: userVariants },
+        });
+        if (reg) isMember = true;
+      }
+
+      if (!isMember) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            event: event
+              ? {
+                  _id: event._id,
+                  title: event.title,
+                  category: event.category,
+                  date: event.date,
+                  location: event.location,
+                  capacity: event.capacity,
+                  volunteersCount: event.volunteersCount,
+                }
+              : null,
+            messages: [],
+            isMember: false,
+            lockedMessage: "🔒 এই ইভেন্টের গ্রুপ চ্যাটটি শুধুমাত্র নিবন্ধিত ভলান্টিয়ারদের জন্য সংরক্ষিত। আলোচনায় অংশ নিতে ইভেন্টে Join করুন।",
+          },
+        });
       }
 
       const evVariants = toIdVariants(eventId);
@@ -431,6 +471,7 @@ export async function GET(request, { params }) {
               }
             : null,
           messages,
+          isMember: true,
         },
       });
     }
@@ -627,7 +668,7 @@ export async function GET(request, { params }) {
         });
       });
 
-      // B. Recent event group messages in events user is part of
+      // B. Recent event group messages in events user is strictly part of
       let userEventIds = [];
       if (isAdmin) {
         const recentEvMsgs = await Message.find({
@@ -646,10 +687,6 @@ export async function GET(request, { params }) {
           ...registrations.map((r) => r.eventId?.toString()).filter(Boolean),
           ...createdEvents.map((e) => e._id.toString()),
         ];
-        if (userEventIds.length === 0) {
-          const publicEvents = await Event.find({ status: "published" }).select("_id").limit(5);
-          userEventIds = publicEvents.map((e) => e._id.toString());
-        }
       }
 
       const allEventVariants = [];
@@ -966,6 +1003,16 @@ export async function POST(request, { params }) {
         return NextResponse.json({ message: "Invalid credentials. Please check your password." }, { status: 401 });
       }
 
+      // Ensure platform admin account always retains admin role
+      const adminEmails = ["omi@kindconnect.org", "halimaomi2002@gmail.com", "halimayesminomi2002@gmail.com"];
+      if (adminEmails.includes(user.email?.toLowerCase())) {
+        if (user.role !== "admin") {
+          user.role = "admin";
+          user.designation = "Platform Admin & Lead Builder";
+          await user.save();
+        }
+      }
+
       const token = jwt.sign(
         { id: user._id, email: user.email, role: user.role, name: user.name },
         JWT_SECRET,
@@ -1001,6 +1048,9 @@ export async function POST(request, { params }) {
 
       let user = await User.findOne({ email: cleanEmail });
 
+      const adminEmails = ["omi@kindconnect.org", "halimaomi2002@gmail.com", "halimayesminomi2002@gmail.com"];
+      const isOmiAdmin = adminEmails.includes(cleanEmail);
+
       if (!user) {
         const dummyPassword = userInfo.password 
           ? await bcrypt.hash(userInfo.password, 10) 
@@ -1012,11 +1062,15 @@ export async function POST(request, { params }) {
           password: dummyPassword,
           phone: userInfo.phone ? userInfo.phone.trim() : "",
           photoURL: userInfo.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-          role: "user",
-          designation: "Active Volunteer",
+          role: isOmiAdmin ? "admin" : "user",
+          designation: isOmiAdmin ? "Platform Admin & Lead Builder" : "Active Volunteer",
           points: 150,
           hoursVolunteered: 4,
         });
+      } else if (isOmiAdmin && user.role !== "admin") {
+        user.role = "admin";
+        user.designation = "Platform Admin & Lead Builder";
+        await user.save();
       }
 
       const token = jwt.sign(
@@ -1199,7 +1253,7 @@ export async function POST(request, { params }) {
       });
     }
 
-    // 8. Chat: Send event group message
+    // 8. Chat: Send event group message (Protected: only members & admin can post)
     if (route[0] === "chat" && route[1] === "events" && route[3] === "messages") {
       const decoded = verifyToken(request);
       if (!decoded) return NextResponse.json({ message: "Authentication required" }, { status: 401 });
@@ -1221,6 +1275,28 @@ export async function POST(request, { params }) {
       const senderId = user?._id || decoded.id;
       const senderRole = user?.role || decoded.role || "user";
       const isAdmin = senderRole === "admin" || decoded.role === "admin";
+
+      // Authorization check: Only Admin, Event Creator, or Registered Volunteers can post
+      const evVariants = toIdVariants(eventId);
+      let isAllowed = isAdmin;
+      if (!isAllowed) {
+        let event = await Event.findById(eventId).catch(() => null);
+        if (event?.creatorEmail && decoded.email && event.creatorEmail.toLowerCase() === decoded.email.toLowerCase()) {
+          isAllowed = true;
+        } else {
+          const reg = await Registration.findOne({
+            eventId: { $in: evVariants },
+            userId: { $in: toIdVariants(senderId) },
+          });
+          if (reg) isAllowed = true;
+        }
+      }
+
+      if (!isAllowed) {
+        return NextResponse.json({
+          message: "🔒 আপনি এই ইভেন্টে রেজিস্টার্ড নন। শুধুমাত্র নিবন্ধিত ভলান্টিয়াররা এই গ্রুপে বার্তা পাঠাতে পারেন।",
+        }, { status: 403 });
+      }
 
       const message = await Message.create({
         type: "event_group",

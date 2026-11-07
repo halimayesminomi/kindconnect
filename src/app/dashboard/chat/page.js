@@ -141,9 +141,9 @@ function ChatContent() {
         } else if (firstUserConv) {
           // Admin defaults to the most recent volunteer inquiry
           setActiveChat({ type: "user", id: firstUserConv.user._id, data: firstUserConv.user });
-        } else if (evList.length > 0) {
-          // Fallback to first event room for admin
-          setActiveChat({ type: "event", id: evList[0]._id, data: evList[0] });
+        } else {
+          // Admin defaults to dedicated private inbox screen (never leak to event room)
+          setActiveChat({ type: "admin_empty" });
         }
       }
     } catch (err) {
@@ -210,7 +210,10 @@ function ChatContent() {
 
   // Fetch messages for currently active chat
   const fetchMessages = async (silent = false) => {
-    if (!activeChat) return;
+    if (!activeChat || activeChat.type === "admin_empty") {
+      setMessages([]);
+      return;
+    }
     if (!silent) setLoadingMessages(true);
 
     try {
@@ -218,6 +221,9 @@ function ChatContent() {
         const res = await api.getEventMessages(activeChat.id);
         if (res.data?.messages) {
           updateMessagesSafely(res.data.messages);
+        }
+        if (res.data?.isMember !== undefined) {
+          setActiveChat(prev => prev ? { ...prev, isMember: res.data.isMember, lockedMessage: res.data.lockedMessage } : null);
         }
       } else if (activeChat.type === "admin") {
         const res = await api.getDirectAdminChat();
@@ -332,24 +338,29 @@ function ChatContent() {
         <div className="chat-sidebar-pane">
           {/* Section 1: DIRECT ADMIN SUPPORT */}
           <div style={{ padding: "16px 14px 10px" }}>
-            <span
-              style={{
-                fontSize: "0.68rem",
-                fontWeight: 800,
-                color: "var(--muted)",
-                letterSpacing: "0.5px",
-                textTransform: "uppercase",
-              }}
-            >
-              Direct Support
-            </span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <span
+                style={{
+                  fontSize: "0.68rem",
+                  fontWeight: 800,
+                  color: "var(--muted)",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                }}
+              >
+                🔒 {isAdmin ? "Private Inquiries" : "Private Support"}
+              </span>
+              <span style={{ fontSize: "0.58rem", background: "rgba(34, 197, 94, 0.15)", color: "var(--green)", padding: "1px 6px", borderRadius: 4, fontWeight: 700 }}>
+                100% Confidential
+              </span>
+            </div>
 
             {/* If regular volunteer: Chat with Admin button */}
             {!isAdmin ? (
               <div
                 onClick={() => selectChat({ type: "admin" })}
                 style={{
-                  marginTop: 8,
+                  marginTop: 6,
                   padding: "10px 12px",
                   borderRadius: 10,
                   cursor: "pointer",
@@ -403,10 +414,10 @@ function ChatContent() {
               </div>
             ) : (
               // If Admin: list of volunteer conversations
-              <div style={{ marginTop: 8 }}>
+              <div style={{ marginTop: 6 }}>
                 {adminConversations.length === 0 ? (
                   <p className="muted" style={{ fontSize: "0.74rem", padding: "8px 4px" }}>
-                    No volunteer inquiries yet.
+                    কোনো সরাসরি মেসেজ নেই।
                   </p>
                 ) : (
                   adminConversations.map(conv => {
@@ -432,8 +443,8 @@ function ChatContent() {
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            <b style={{ fontSize: "0.78rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                              {conv.user.name}
+                            <b style={{ fontSize: "0.78rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: 4 }}>
+                              <span style={{ fontSize: "0.7rem" }}>🔒</span> {conv.user.name}
                             </b>
                             {conv.unreadCount > 0 && (
                               <span style={{ background: "#ef4444", color: "#fff", fontSize: "0.6rem", fontWeight: 800, padding: "1px 6px", borderRadius: 10 }}>
@@ -467,14 +478,23 @@ function ChatContent() {
                   textTransform: "uppercase",
                 }}
               >
-                Event Group Rooms ({events.length})
+                👥 Event Team Channels ({events.length})
               </span>
             </div>
 
             {events.length === 0 ? (
-              <p className="muted" style={{ fontSize: "0.74rem", padding: "12px 4px" }}>
-                No active events available at this moment.
-              </p>
+              <div style={{ padding: "14px 6px", textAlign: "center" }}>
+                <p className="muted" style={{ fontSize: "0.74rem", margin: "0 0 8px" }}>
+                  আপনি এখনও কোনো ইভেন্টে যোগ দেননি।
+                </p>
+                <a
+                  href="/events"
+                  className="btn btn-outline"
+                  style={{ padding: "4px 10px", fontSize: "0.7rem", display: "inline-block" }}
+                >
+                  ইভেন্ট তালিকা দেখুন
+                </a>
+              </div>
             ) : (
               events.map(ev => {
                 const isSelected = activeChat?.type === "event" && activeChat.id === ev._id;
@@ -517,11 +537,9 @@ function ChatContent() {
                     >
                       {ev.title}
                     </b>
-                    {ev.lastMessage && (
-                      <small className="muted" style={{ fontSize: "0.68rem", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>
-                        {((ev.lastMessage.senderName || "").trim().split(/\s+/)[0] || "User")}: {ev.lastMessage.text}
-                      </small>
-                    )}
+                    <small className="muted" style={{ fontSize: "0.66rem", display: "block", marginTop: 2 }}>
+                      👥 Registered Volunteer Team Channel
+                    </small>
                   </div>
                 );
               })
@@ -568,13 +586,13 @@ function ChatContent() {
                     </span>
                   </div>
                   <p className="muted" style={{ fontSize: "0.74rem", margin: "3px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    Official group room for registered volunteers and organizers • {activeChat.data?.location || "Sylhet"}
+                    Official team channel for registered volunteers and organizers • {activeChat.data?.location || "Sylhet"}
                   </p>
                 </div>
               ) : activeChat?.type === "admin" ? (
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "1.2rem" }}>🛡️</span>
+                    <span style={{ fontSize: "1.2rem" }}>👑</span>
                     <h3 style={{ margin: 0, fontSize: "1.05rem" }}>
                       {adminInfo?.name || "Halima Yesmin Omi"}
                     </h3>
@@ -591,12 +609,25 @@ function ChatContent() {
                     >
                       PLATFORM ADMIN & BUILDER
                     </span>
+                    <span
+                      style={{
+                        background: "rgba(34, 197, 94, 0.15)",
+                        color: "var(--green)",
+                        fontSize: "0.6rem",
+                        fontWeight: 800,
+                        padding: "2px 8px",
+                        borderRadius: 10,
+                        border: "1px solid rgba(34, 197, 94, 0.3)"
+                      }}
+                    >
+                      🔒 100% PRIVATE & CONFIDENTIAL
+                    </span>
                   </div>
                   <p className="muted" style={{ fontSize: "0.74rem", margin: "3px 0 0" }}>
-                    Direct line for urgent inquiries, volunteer coordination, and platform support.
+                    Direct encrypted support line with Lead Builder Halima Yesmin Omi.
                   </p>
                 </div>
-              ) : (
+              ) : activeChat?.type === "user" ? (
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span className="avatar" style={{ width: 28, height: 28, fontSize: "0.65rem" }}>
@@ -606,9 +637,29 @@ function ChatContent() {
                     <span className="status-pill" style={{ fontSize: "0.62rem" }}>
                       {activeChat?.data?.role || "Volunteer"}
                     </span>
+                    <span
+                      style={{
+                        background: "rgba(34, 197, 94, 0.15)",
+                        color: "var(--green)",
+                        fontSize: "0.6rem",
+                        fontWeight: 800,
+                        padding: "2px 8px",
+                        borderRadius: 10,
+                        border: "1px solid rgba(34, 197, 94, 0.3)"
+                      }}
+                    >
+                      🔒 CONFIDENTIAL INBOX
+                    </span>
                   </div>
                   <p className="muted" style={{ fontSize: "0.74rem", margin: "3px 0 0" }}>
-                    Direct volunteer support thread with {activeChat?.data?.email}
+                    Private volunteer support thread with {activeChat?.data?.email}
+                  </p>
+                </div>
+              ) : (
+                <div style={{ minWidth: 0 }}>
+                  <h3 style={{ margin: 0, fontSize: "1.05rem" }}>🛡️ Admin Support Manager</h3>
+                  <p className="muted" style={{ fontSize: "0.74rem", margin: "3px 0 0" }}>
+                    Manage volunteer inquiries and event channels securely.
                   </p>
                 </div>
               )}
@@ -627,6 +678,34 @@ function ChatContent() {
             )}
           </div>
 
+          {/* Privacy & Confidentiality Notification Banner */}
+          {activeChat?.type === "admin" && (
+            <div style={{ margin: "10px 18px 0", padding: "8px 12px", borderRadius: 8, background: "rgba(34, 197, 94, 0.08)", border: "1px solid rgba(34, 197, 94, 0.25)", display: "flex", alignItems: "center", gap: 8 }}>
+              <ShieldCheck size={16} color="var(--green)" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: "0.73rem", color: "var(--text)", lineHeight: 1.4 }}>
+                <b>🔒 ১০০% নিরাপদ ও ব্যক্তিগত চ্যাট:</b> এই কথোপকথনটি সম্পূর্ণ গোপনীয়। শুধুমাত্র আপনি এবং প্ল্যাটফর্ম অ্যাডমিন Halima Yesmin Omi ছাড়া অন্য কোনো ভলান্টিয়ার বা ব্যবহারকারী এই বার্তা দেখতে পারবে না।
+              </span>
+            </div>
+          )}
+
+          {activeChat?.type === "user" && (
+            <div style={{ margin: "10px 18px 0", padding: "8px 12px", borderRadius: 8, background: "rgba(34, 197, 94, 0.08)", border: "1px solid rgba(34, 197, 94, 0.25)", display: "flex", alignItems: "center", gap: 8 }}>
+              <ShieldCheck size={16} color="var(--green)" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: "0.73rem", color: "var(--text)", lineHeight: 1.4 }}>
+                <b>🔒 প্রাইভেট ভলান্টিয়ার থ্রেড:</b> আপনি <b>{activeChat.data?.name}</b>-এর সাথে ব্যক্তিগতভাবে কথা বলছেন। অন্য কোনো ভলান্টিয়ার বা ব্যক্তি এটি দেখতে পাচ্ছে না।
+              </span>
+            </div>
+          )}
+
+          {activeChat?.type === "event" && (
+            <div style={{ margin: "10px 18px 0", padding: "8px 12px", borderRadius: 8, background: "rgba(59, 130, 246, 0.08)", border: "1px solid rgba(59, 130, 246, 0.25)", display: "flex", alignItems: "center", gap: 8 }}>
+              <Users size={16} color="#60a5fa" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: "0.73rem", color: "var(--text)", lineHeight: 1.4 }}>
+                <b>👥 টিম চ্যানেল:</b> এটি একটি ইভেন্ট গ্রুপ আলোচনা। শুধুমাত্র এই ইভেন্টে অনুমোদিত ও নিবন্ধিত ভলান্টিয়াররা এই গ্রুপের আলোচনা দেখতে পাচ্ছেন।
+              </span>
+            </div>
+          )}
+
           {/* Messages Stream */}
           <div
             style={{
@@ -638,7 +717,31 @@ function ChatContent() {
               gap: 12,
             }}
           >
-            {loadingMessages ? (
+            {activeChat?.type === "admin_empty" ? (
+              <div style={{ textAlign: "center", margin: "auto", maxWidth: 400, padding: 30 }}>
+                <span style={{ fontSize: "3rem", display: "block", marginBottom: 12 }}>🛡️</span>
+                <h3 style={{ margin: "0 0 8px" }}>Admin Private Support Manager</h3>
+                <p className="muted" style={{ fontSize: "0.82rem", lineHeight: 1.5 }}>
+                  বর্তমানে কোনো ভলান্টিয়ারের সরাসরি বার্তা বাকি নেই। ভলান্টিয়াররা ডাইরেক্ট সাপোর্ট পাঠালে বাম পাশের তালিকায় তাদের ব্যক্তিগত সুরক্ষিত ইনবক্স দেখা যাবে।
+                </p>
+              </div>
+            ) : activeChat?.type === "event" && activeChat.isMember === false ? (
+              <div style={{ textAlign: "center", margin: "auto", maxWidth: 420, padding: 30 }}>
+                <span style={{ fontSize: "3rem", display: "block", marginBottom: 12 }}>🔒</span>
+                <h3 style={{ margin: "0 0 8px", color: "#f87171" }}>নিবন্ধিত ভলান্টিয়ারদের জন্য সংরক্ষিত</h3>
+                <p className="muted" style={{ fontSize: "0.82rem", lineHeight: 1.5, marginBottom: 16 }}>
+                  এই ইভেন্টের গ্রুপ চ্যাটটি শুধুমাত্র অনুমোদিত ভলান্টিয়ারদের জন্য। আলোচনায় অংশ নিতে এবং সহ-ভলান্টিয়ারদের সাথে সমন্বয় করতে ইভেন্টে যোগ দিন।
+                </p>
+                <a
+                  href={`/events/${activeChat.id}`}
+                  className="btn btn-primary"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 18px", fontSize: "0.84rem" }}
+                >
+                  <span>ইভেন্টে যোগ দিন (Join Opportunity)</span>
+                  <ArrowUpRight size={15} />
+                </a>
+              </div>
+            ) : loadingMessages ? (
               <p className="muted" style={{ textAlign: "center", margin: "auto" }}>
                 Loading conversation messages...
               </p>
@@ -754,62 +857,64 @@ function ChatContent() {
           </div>
 
           {/* Message Input Box */}
-          <form
-            onSubmit={handleSendMessage}
-            style={{
-              padding: "12px 16px",
-              borderTop: "1px solid var(--line)",
-              display: "flex",
-              gap: 8,
-              background: "rgba(0,0,0,0.02)",
-              alignItems: "center"
-            }}
-          >
-            <input
-              type="text"
-              className="chat-input-box"
-              placeholder={
-                activeChat?.type === "event"
-                  ? `Message #${activeChat.data?.title || "event group"}...`
-                  : activeChat?.type === "admin"
-                  ? "Message Halima Yesmin Omi (Admin)..."
-                  : `Reply to ${activeChat?.data?.name || "volunteer"}...`
-              }
-              value={inputText}
-              onChange={e => setInputText(e.target.value)}
-              disabled={sending || !activeChat}
+          {activeChat?.type === "event" && activeChat.isMember === false ? null : activeChat?.type === "admin_empty" ? null : (
+            <form
+              onSubmit={handleSendMessage}
               style={{
-                flex: 1,
-                padding: "10px 16px",
-                borderRadius: 12,
-                fontSize: "16px",
-                border: "1px solid var(--line)",
-                background: "var(--bg)",
-                color: "var(--text)",
-                outline: "none",
-                minHeight: 44
-              }}
-            />
-            <button
-              type="submit"
-              disabled={sending || !inputText.trim() || !activeChat}
-              className="btn btn-primary"
-              style={{
-                padding: "10px 18px",
-                fontSize: "0.88rem",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                borderRadius: 12,
-                minHeight: 44,
-                minWidth: 72,
-                justifyContent: "center"
+                padding: "12px 16px",
+                borderTop: "1px solid var(--line)",
+                display: "flex",
+                gap: 8,
+                background: "rgba(0,0,0,0.02)",
+                alignItems: "center"
               }}
             >
-              <span>{sending ? "..." : "Send"}</span>
-              <Send size={15} />
-            </button>
-          </form>
+              <input
+                type="text"
+                className="chat-input-box"
+                placeholder={
+                  activeChat?.type === "event"
+                    ? `Message #${activeChat.data?.title || "event group"}...`
+                    : activeChat?.type === "admin"
+                    ? "Message Halima Yesmin Omi (100% Private & Confidential)..."
+                    : `Reply privately to ${activeChat?.data?.name || "volunteer"}...`
+                }
+                value={inputText}
+                onChange={e => setInputText(e.target.value)}
+                disabled={sending || !activeChat}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  borderRadius: 12,
+                  fontSize: "16px",
+                  border: "1px solid var(--line)",
+                  background: "var(--bg)",
+                  color: "var(--text)",
+                  outline: "none",
+                  minHeight: 44
+                }}
+              />
+              <button
+                type="submit"
+                disabled={sending || !inputText.trim() || !activeChat}
+                className="btn btn-primary"
+                style={{
+                  padding: "10px 18px",
+                  fontSize: "0.88rem",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  borderRadius: 12,
+                  minHeight: 44,
+                  minWidth: 72,
+                  justifyContent: "center"
+                }}
+              >
+                <span>{sending ? "..." : "Send"}</span>
+                <Send size={15} />
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </>
