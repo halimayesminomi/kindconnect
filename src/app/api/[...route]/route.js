@@ -82,7 +82,7 @@ async function getPrimaryAdmin() {
     $or: [
       { role: "admin" },
       { username: "omi" },
-      { email: { $in: ["omi@kindconnect.org", "halimaomi2002@gmail.com", "halima@kindconnect.org", "halimatanima@gmail.com"] } },
+      { email: { $in: ["omi@kindconnect.org", "halimaomi2002@gmail.com", "halimayesminomi2002@gmail.com", "halima@kindconnect.org"] } },
     ],
   });
   if (!admin) {
@@ -496,6 +496,36 @@ export async function GET(request, { params }) {
           { sender: { $in: adminQueryVariants }, recipient: { $in: currentUserVariants } },
         ],
       }).sort({ createdAt: 1 });
+
+      // If user has no messages yet with Admin, auto-generate personalized welcome greeting
+      if (messages.length === 0 && decoded.role !== "admin") {
+        try {
+          let currentUser = null;
+          try {
+            currentUser = await User.findById(decoded.id);
+          } catch (_) {}
+          const recipientDisplayName = currentUser?.name ? currentUser.name.trim() : (decoded.name ? decoded.name.trim() : "Volunteer");
+          const defaultConvId = [currentUserIdStr, primaryAdmin._id.toString()].sort().join("_");
+          const welcomeMsg = await Message.create({
+            type: "direct",
+            conversationId: defaultConvId,
+            sender: primaryAdmin._id,
+            senderName: primaryAdmin.name || "Halima Yesmin Omi",
+            senderUsername: primaryAdmin.username || "omi",
+            senderRole: "admin",
+            senderDesignation: primaryAdmin.designation || "Platform Admin & Lead Builder",
+            senderPhoto: primaryAdmin.photoURL || "",
+            recipient: decoded.id,
+            recipientName: recipientDisplayName,
+            text: `Hello ${recipientDisplayName}! Welcome to KindConnect. You are assigned to team A.`,
+            read: false,
+            readBy: [primaryAdmin._id.toString()],
+          });
+          messages.push(welcomeMsg);
+        } catch (autoMsgErr) {
+          console.error("Auto welcome error on fetch:", autoMsgErr);
+        }
+      }
 
       // Mark unread messages sent by admin to this user as read
       await Message.updateMany(
@@ -950,6 +980,32 @@ export async function POST(request, { params }) {
         hoursVolunteered: 2,
       });
 
+      // Send dynamic personalized welcome direct message from Admin to new volunteer
+      try {
+        const { primaryAdmin } = await getAllAdminIdentities();
+        if (primaryAdmin && newUser.role !== "admin") {
+          const recipientDisplayName = newUser.name ? newUser.name.trim() : "Volunteer";
+          const defaultConvId = [newUser._id.toString(), primaryAdmin._id.toString()].sort().join("_");
+          await Message.create({
+            type: "direct",
+            conversationId: defaultConvId,
+            sender: primaryAdmin._id,
+            senderName: primaryAdmin.name || "Halima Yesmin Omi",
+            senderUsername: primaryAdmin.username || "omi",
+            senderRole: "admin",
+            senderDesignation: primaryAdmin.designation || "Platform Admin & Lead Builder",
+            senderPhoto: primaryAdmin.photoURL || "",
+            recipient: newUser._id,
+            recipientName: recipientDisplayName,
+            text: `Hello ${recipientDisplayName}! Welcome to KindConnect. You are assigned to team A.`,
+            read: false,
+            readBy: [primaryAdmin._id.toString()],
+          });
+        }
+      } catch (welcomeErr) {
+        console.error("Auto welcome message error in register:", welcomeErr);
+      }
+
       const token = jwt.sign(
         { id: newUser._id, email: newUser.email, role: newUser.role, name: newUser.name },
         JWT_SECRET,
@@ -1067,6 +1123,32 @@ export async function POST(request, { params }) {
           points: 150,
           hoursVolunteered: 4,
         });
+
+        // Send dynamic personalized welcome direct message from Admin to new volunteer
+        try {
+          const { primaryAdmin } = await getAllAdminIdentities();
+          if (primaryAdmin && !isOmiAdmin) {
+            const recipientDisplayName = user.name ? user.name.trim() : "Volunteer";
+            const defaultConvId = [user._id.toString(), primaryAdmin._id.toString()].sort().join("_");
+            await Message.create({
+              type: "direct",
+              conversationId: defaultConvId,
+              sender: primaryAdmin._id,
+              senderName: primaryAdmin.name || "Halima Yesmin Omi",
+              senderUsername: primaryAdmin.username || "omi",
+              senderRole: "admin",
+              senderDesignation: primaryAdmin.designation || "Platform Admin & Lead Builder",
+              senderPhoto: primaryAdmin.photoURL || "",
+              recipient: user._id,
+              recipientName: recipientDisplayName,
+              text: `Hello ${recipientDisplayName}! Welcome to KindConnect. You are assigned to team A.`,
+              read: false,
+              readBy: [primaryAdmin._id.toString()],
+            });
+          }
+        } catch (welcomeErr) {
+          console.error("Auto welcome message error in google auth:", welcomeErr);
+        }
       } else if (isOmiAdmin && user.role !== "admin") {
         user.role = "admin";
         user.designation = "Platform Admin & Lead Builder";
