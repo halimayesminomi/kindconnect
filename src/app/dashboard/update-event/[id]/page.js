@@ -148,7 +148,7 @@ export default function UpdateEvent() {
           </div>
         </div>
 
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:15}}>
+        <div className="form-row-3" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:15}}>
           <div>
             <label style={{display:"block",fontSize:".76rem",fontWeight:700,margin:"15px 0 7px"}}>Date</label>
             <div className="input-wrap"><input name="date" type="date" defaultValue={dateValue} required style={{colorScheme:"dark"}}/></div>

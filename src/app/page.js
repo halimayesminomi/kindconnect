@@ -180,7 +180,7 @@ export default function Home() {
             title="Static Community Gallery" 
             description="A glimpse into recent grassroots drives organized by kind volunteers across neighborhoods."
           />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+          <div className="gallery-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 20 }}>
             {GALLERY_ITEMS.map((item, idx) => (
               <div 
                 key={idx} 
@@ -246,7 +246,7 @@ export default function Home() {
 
       {/* Newsletter Subscription Design */}
       <section className="section container" style={{ paddingBottom: 40 }}>
-        <div style={{
+        <div className="newsletter-banner" style={{
           background: "linear-gradient(135deg, #132218 0%, #17241c 60%, #0d1712 100%)",
           border: "1px solid #41553c",
           borderRadius: 22,

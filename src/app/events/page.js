@@ -457,9 +457,9 @@ export default function EventsPage() {
         </div>
 
         {/* Map & List Split Layout */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.25fr 1fr", gap: 24 }}>
+        <div className="map-split-grid" style={{ display: "grid", gridTemplateColumns: "1.25fr 1fr", gap: 24 }}>
           {/* Interactive OpenStreetMap Container */}
-          <div style={{ border: "1px solid var(--line)", borderRadius: 16, overflow: "hidden", height: 530, position: "relative" }}>
+          <div className="map-iframe-box" style={{ border: "1px solid var(--line)", borderRadius: 16, overflow: "hidden", height: 530, position: "relative" }}>
             <iframe
               title={`Bangladesh Map - ${activeDivision.name}`}
               width="100%"

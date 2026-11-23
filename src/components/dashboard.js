@@ -126,6 +126,7 @@ export function DashboardShell({ children, user }) {
   };
 
   return <div className="dashboard-layout">
+    {open && <div className="sidebar-backdrop" onClick={() => setOpen(false)} />}
     <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
       <div className="sidebar-top">
         <Link href="/" className="brand"><span className="brand-mark"><HeartHandshake size={21}/></span><span>kind<span className="brand-accent">connect</span><small>{lang === "bn" ? "আপনার প্রভাবের ক্ষেত্র" : "YOUR IMPACT SPACE"}</small></span></Link>
@@ -179,7 +180,7 @@ export function DashboardShell({ children, user }) {
             {theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}
           </button>
 
-          <Link href="/dashboard/create-event" className="btn btn-primary" style={{padding:"8px 14px",fontSize:".78rem"}}><Plus size={15}/>{t("newEvent")}</Link>
+          <Link href="/dashboard/create-event" className="btn btn-primary dash-new-btn" style={{padding:"8px 14px",fontSize:".78rem"}}><Plus size={15}/><span className="dash-btn-text">{t("newEvent")}</span></Link>
           
           {/* Notification Menu */}
           <div style={{ position: "relative" }} ref={notifRef}>

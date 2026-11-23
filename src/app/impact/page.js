@@ -138,7 +138,7 @@ export default function Impact() {
           <h2 style={{ margin: "10px 0" }}>Platform Growth & Participation Insights</h2>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }}>
+        <div className="analytics-split-grid" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }}>
           {/* Monthly Growth Area Chart */}
           <div style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 16, padding: "24px" }}>
             <div style={{ marginBottom: 18 }}>

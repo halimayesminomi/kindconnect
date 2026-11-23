@@ -57,7 +57,7 @@ export default function Organizer() {
     </div>
 
     {/* Quick Action Tools */}
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, margin: "20px 0" }}>
+    <div className="organizer-tools-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, margin: "20px 0" }}>
       <Link href="/dashboard/attendance" style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 14, padding: "20px", display: "flex", alignItems: "center", gap: 16 }}>
         <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(183, 243, 107, 0.15)", color: "var(--green)", display: "grid", placeItems: "center" }}>
           <QrCode size={22} />

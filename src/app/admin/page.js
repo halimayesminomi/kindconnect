@@ -1358,7 +1358,7 @@ export default function AdminPage() {
 
                   {profileModalTab === "governance" && (
                     <form onSubmit={handleSaveUserGovernance} style={{ display: "grid", gap: 14 }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div className="form-row-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                         <div>
                           <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, marginBottom: 5 }}>
                             প্ল্যাটফর্ম রোল (Role)
@@ -1388,7 +1388,7 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div className="form-row-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                         <div>
                           <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, marginBottom: 5 }}>
                             ভলান্টিয়ার পয়েন্ট (Impact Points)

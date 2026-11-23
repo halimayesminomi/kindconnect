@@ -651,7 +651,7 @@ export default function Certificates() {
           /* ============================================================== */
           <div 
             id="printable-certificate"
-            className={`printable-sheet ${selectedEventCert ? "no-print" : ""}`}
+            className={`printable-sheet official-cert-card ${selectedEventCert ? "no-print" : ""}`}
             style={{
               background: "linear-gradient(145deg, #0e1712 0%, #080f0b 100%)",
               border: "3px solid #b7f36b",
@@ -1172,7 +1172,7 @@ export default function Certificates() {
             </p>
 
             {/* Event Attributes */}
-            <div style={{
+            <div className="cert-meta-grid" style={{
               display: "grid",
               gridTemplateColumns: "repeat(3, 1fr)",
               gap: 12,

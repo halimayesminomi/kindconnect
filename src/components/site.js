@@ -69,6 +69,7 @@ export function Navbar() {
         </Link>
 
         {/* Center Main Nav */}
+        {open && <div className="nav-backdrop" onClick={() => setOpen(false)} />}
         <nav className={`main-nav ${open ? "nav-open" : ""}`}>
           {links.map(([label, href]) => (
             <Link key={href} className={pathname === href ? "active" : ""} href={href} onClick={() => setOpen(false)}>

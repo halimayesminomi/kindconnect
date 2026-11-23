@@ -255,7 +255,7 @@ export default function EmergencyPage() {
             <p>{lang === "bn" ? "কমিউনিটি এই মুহূর্তে সুরক্ষিত ও সহযোগিতাপ্রাপ্ত।" : "Communities are currently supported."}</p>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20 }}>
+          <div className="emergency-cards-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 290px), 1fr))", gap: 20 }}>
             {filtered.map(req => {
               const isCritical = req.urgency === "Critical";
               const respondersList = req.responders || [];
@@ -567,7 +567,7 @@ export default function EmergencyPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="form-row-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <div>
                     <label style={{ display: "block", fontSize: ".75rem", fontWeight: 700, marginBottom: 6 }}>
                       {lang === "bn" ? "ক্যাটাগরি" : "Category"}
@@ -602,7 +602,7 @@ export default function EmergencyPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="form-row-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <div>
                     <label style={{ display: "block", fontSize: ".75rem", fontWeight: 700, marginBottom: 6 }}>
                       {lang === "bn" ? "স্থান / হাসপাতাল" : "Location / Hospital"}
